@@ -142,5 +142,5 @@ LockedIn is an open-source browser extension that helps you focus on YouTube by 
 
 ---
 
-Made with ❤️ by [Kartik Halkunde](https://github.com/KartikHalkunde)
+Made with ❤️ by [Kartik Rashmin](https://github.com/KartikRashmin)
 </div>
