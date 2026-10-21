@@ -6,6 +6,7 @@ lockedin-chromium-*.zip
 dist/
 chromium-build/
 temp-chrome-build/
+brag-output/
 
 # Chrome extension packaging files (not needed - Chrome Web Store handles signing)
 *.crx
