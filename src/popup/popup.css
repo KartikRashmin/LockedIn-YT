@@ -958,21 +958,10 @@ body {
   margin: 0;
 }
 
-.settings-lock-progress {
-  width: 160px;
-  height: 4px;
-  border-radius: 999px;
-  background: hsla(0, 0%, 100%, 0.12);
-  overflow: hidden;
-}
-
-.settings-lock-progress-bar {
-  height: 100%;
-  width: 100%;
-  border-radius: inherit;
-  background: hsl(0, 100%, 50%);
-  transform-origin: left center;
-  transition: transform 0.2s linear;
+/* "Show Countdown" off: wait without seeing how long is left */
+.settings-lock-countdown[hidden],
+.settings-lock-countdown-row[hidden] {
+  display: none;
 }
 
 .settings-lock-subtitle {
@@ -1946,14 +1935,6 @@ body {
 
 .popup-container.light-mode .settings-lock-subtitle {
   color: hsl(210, 15%, 45%);
-}
-
-.popup-container.light-mode .settings-lock-progress {
-  background: hsla(210, 30%, 70%, 0.35);
-}
-
-.popup-container.light-mode .settings-lock-progress-bar {
-  background: hsl(6, 82%, 60%);
 }
 
 .popup-container.light-mode .settings-list {
