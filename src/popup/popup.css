@@ -895,6 +895,94 @@ body {
   margin: 0;
 }
 
+/* ===== SETTINGS LOCK TIMER ===== */
+/* Hide the popup content until we know whether the lock should be shown, so settings never flash */
+.popup-container.settings-lock-checking > :not(.settings-lock-overlay) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-lock-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  /* Opaque so the settings behind it can't be read during the countdown */
+  background: rgb(8, 9, 8);
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.popup-container.settings-locked .settings-lock-overlay,
+.popup-container.settings-unlocking .settings-lock-overlay {
+  display: flex;
+}
+
+.popup-container.settings-unlocking .settings-lock-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-lock-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+.settings-lock-icon {
+  width: 40px;
+  height: 40px;
+  color: hsl(0, 100%, 50%);
+  opacity: 0.85;
+}
+
+.settings-lock-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: hsl(0, 0%, 88%);
+  margin: 0;
+}
+
+.settings-lock-countdown {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  color: hsl(0, 0%, 96%);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.settings-lock-progress {
+  width: 160px;
+  height: 4px;
+  border-radius: 999px;
+  background: hsla(0, 0%, 100%, 0.12);
+  overflow: hidden;
+}
+
+.settings-lock-progress-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: hsl(0, 100%, 50%);
+  transform-origin: left center;
+  transition: transform 0.2s linear;
+}
+
+.settings-lock-subtitle {
+  font-size: 12px;
+  line-height: 1.4;
+  color: hsl(0, 0%, 65%);
+  max-width: 220px;
+  margin: 0;
+}
+
 .settings-scroll-area::-webkit-scrollbar {
   width: 6px;
 }
@@ -1841,6 +1929,31 @@ body {
 
 .popup-container.light-mode .disabled-text {
   color: currentColor;
+}
+
+.popup-container.light-mode .settings-lock-overlay {
+  background: var(--popup-surface);
+}
+
+.popup-container.light-mode .settings-lock-icon {
+  color: hsl(6, 82%, 58%);
+}
+
+.popup-container.light-mode .settings-lock-title,
+.popup-container.light-mode .settings-lock-countdown {
+  color: currentColor;
+}
+
+.popup-container.light-mode .settings-lock-subtitle {
+  color: hsl(210, 15%, 45%);
+}
+
+.popup-container.light-mode .settings-lock-progress {
+  background: hsla(210, 30%, 70%, 0.35);
+}
+
+.popup-container.light-mode .settings-lock-progress-bar {
+  background: hsl(6, 82%, 60%);
 }
 
 .popup-container.light-mode .settings-list {

@@ -42,8 +42,12 @@ const DEFAULT_SETTINGS = {
   breakDuration: 5,
   customMeme: null,
   appearance: 'auto',
-  language: 'auto'
+  language: 'auto',
+  settingsLockDuration: 0
 };
+
+// Seconds the popup stays locked on open (0 = Settings Lock Timer off)
+const SETTINGS_LOCK_OPTIONS = [0, 5, 10, 15, 30, 60];
 
 const APPEARANCE_OPTIONS = ['auto', 'light', 'dark'];
 const APPEARANCE_LABEL_KEYS = {
@@ -116,6 +120,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Light',
     'appearance.option.dark': 'Dark',
     'language.option.auto': 'Auto',
+    'menu.option.settingsLock': 'Settings Lock Timer',
+    'menu.option.settingsLock.desc': 'Make yourself wait before changing settings each time you open LockedIn.',
+    'settingsLock.option.off': 'Off',
+    'settingsLock.option.seconds': '{seconds}s',
+    'settingsLock.title': 'Settings locked',
+    'settingsLock.subtitle': 'Take a breath. Do you really need to change something?',
     'group.homepage': 'Homepage',
     'group.subscriptionsPage': 'Subscriptions Page',
     'setting.hideFeed': 'Hide Homepage Feed',
@@ -204,6 +214,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Claro',
     'appearance.option.dark': 'Oscuro',
     'language.option.auto': 'Automático',
+    'menu.option.settingsLock': 'Temporizador de bloqueo',
+    'menu.option.settingsLock.desc': 'Espera unos segundos antes de cambiar los ajustes cada vez que abras LockedIn.',
+    'settingsLock.option.off': 'Desactivado',
+    'settingsLock.option.seconds': '{seconds} s',
+    'settingsLock.title': 'Ajustes bloqueados',
+    'settingsLock.subtitle': 'Respira. ¿De verdad necesitas cambiar algo?',
     'group.homepage': 'Página principal',
     'group.subscriptionsPage': 'Página de suscripciones',
     'setting.hideFeed': 'Ocultar feed de inicio',
@@ -289,6 +305,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'हल्का',
     'appearance.option.dark': 'गहरा',
     'language.option.auto': 'स्वचालित',
+    'menu.option.settingsLock': 'सेटिंग्स लॉक टाइमर',
+    'menu.option.settingsLock.desc': 'हर बार LockedIn खोलने पर सेटिंग्स बदलने से पहले कुछ सेकंड रुकें।',
+    'settingsLock.option.off': 'बंद',
+    'settingsLock.option.seconds': '{seconds} से.',
+    'settingsLock.title': 'सेटिंग्स लॉक हैं',
+    'settingsLock.subtitle': 'गहरी साँस लें। क्या सच में कुछ बदलना ज़रूरी है?',
     'group.homepage': 'होमपेज',
     'group.subscriptionsPage': 'सब्सक्रिप्शन पेज',
     'setting.hideFeed': 'होमपेज फ़ीड छुपाएँ',
@@ -374,6 +396,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Claro',
     'appearance.option.dark': 'Escuro',
     'language.option.auto': 'Automático',
+    'menu.option.settingsLock': 'Temporizador de bloqueio',
+    'menu.option.settingsLock.desc': 'Espere alguns segundos antes de alterar as configurações sempre que abrir o LockedIn.',
+    'settingsLock.option.off': 'Desativado',
+    'settingsLock.option.seconds': '{seconds} s',
+    'settingsLock.title': 'Configurações bloqueadas',
+    'settingsLock.subtitle': 'Respire fundo. Você precisa mesmo mudar algo?',
     'group.homepage': 'Página inicial',
     'group.subscriptionsPage': 'Página de inscrições',
     'setting.hideFeed': 'Ocultar feed inicial',
@@ -459,6 +487,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Clair',
     'appearance.option.dark': 'Sombre',
     'language.option.auto': 'Automatique',
+    'menu.option.settingsLock': 'Minuteur de verrouillage',
+    'menu.option.settingsLock.desc': 'Attendez quelques secondes avant de modifier les réglages à chaque ouverture de LockedIn.',
+    'settingsLock.option.off': 'Désactivé',
+    'settingsLock.option.seconds': '{seconds} s',
+    'settingsLock.title': 'Réglages verrouillés',
+    'settingsLock.subtitle': 'Respirez. Avez-vous vraiment besoin de changer quelque chose ?',
     'group.homepage': 'Page d’accueil',
     'group.subscriptionsPage': 'Page des abonnements',
     'setting.hideFeed': 'Masquer le flux d’accueil',
@@ -544,6 +578,12 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Hell',
     'appearance.option.dark': 'Dunkel',
     'language.option.auto': 'Automatisch',
+    'menu.option.settingsLock': 'Einstellungssperre',
+    'menu.option.settingsLock.desc': 'Warte bei jedem Öffnen von LockedIn ein paar Sekunden, bevor du Einstellungen ändern kannst.',
+    'settingsLock.option.off': 'Aus',
+    'settingsLock.option.seconds': '{seconds} s',
+    'settingsLock.title': 'Einstellungen gesperrt',
+    'settingsLock.subtitle': 'Atme durch. Musst du wirklich etwas ändern?',
     'group.homepage': 'Startseite',
     'group.subscriptionsPage': 'Abonnementseite',
     'setting.hideFeed': 'Startseiten-Feed ausblenden',
@@ -629,6 +669,12 @@ const I18N_STRINGS = {
     'appearance.option.light': '浅色',
     'appearance.option.dark': '深色',
     'language.option.auto': '自动',
+    'menu.option.settingsLock': '设置锁定计时器',
+    'menu.option.settingsLock.desc': '每次打开 LockedIn 时，需等待几秒才能更改设置。',
+    'settingsLock.option.off': '关闭',
+    'settingsLock.option.seconds': '{seconds}秒',
+    'settingsLock.title': '设置已锁定',
+    'settingsLock.subtitle': '深呼吸。你真的需要更改什么吗？',
     'group.homepage': '主页',
     'group.subscriptionsPage': '订阅页面',
     'setting.hideFeed': '隐藏首页信息流',
@@ -716,6 +762,12 @@ const I18N_STRINGS = {
     'appearance.option.light': '淺色',
     'appearance.option.dark': '深色',
     'language.option.auto': '自動',
+    'menu.option.settingsLock': '設定鎖定計時器',
+    'menu.option.settingsLock.desc': '每次開啟 LockedIn 時，需等待幾秒才能更改設定。',
+    'settingsLock.option.off': '關閉',
+    'settingsLock.option.seconds': '{seconds}秒',
+    'settingsLock.title': '設定已鎖定',
+    'settingsLock.subtitle': '深呼吸。你真的需要更改什麼嗎？',
     'group.homepage': '主頁',
     'group.subscriptionsPage': '訂閱頁面',
     'setting.hideFeed': '隱藏首頁信息流',
@@ -789,6 +841,7 @@ let activeLanguage = FALLBACK_LANGUAGE;
 let currentAppearanceValue = 'auto';
 let currentLanguagePreference = 'auto';
 let currentThumbnailMode = 'off';
+let currentSettingsLockDuration = 0;
 
 function normalizeThumbnailMode(value) {
   if (value === true) return 'reveal-on-hover';
@@ -920,6 +973,7 @@ function applyTranslations(languageCode) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+  setupSettingsLock();
   displayVersion();
   setupToggleListeners();
   setupGroupCollapsibles();
@@ -1320,6 +1374,7 @@ function applyLanguageSetting(value, options = {}) {
   updateThumbnailModeUI(currentThumbnailMode);
   updateMenuDropdownDisplay('language', normalized);
   updateMenuDropdownDisplay('appearance', currentAppearanceValue);
+  updateSettingsLockDisplay(currentSettingsLockDuration);
   browser.storage.sync.get(['extensionEnabled', 'takeBreak', 'breakStartTime', 'breakDuration'], (state) => {
     if (state && state.takeBreak && state.breakStartTime && state.breakDuration && state.extensionEnabled === false) {
       startBreakCountdown(Number(state.breakStartTime), Number(state.breakDuration));
@@ -1430,6 +1485,106 @@ function startBreakCountdown(startTime, duration) {
 
   updateTimer();
   breakInterval = setInterval(updateTimer, 1000);
+}
+
+// ===== SETTINGS LOCK TIMER =====
+// When enabled, every time the popup opens it is covered by a countdown, and
+// settings only become usable once it reaches 0. Closing the popup resets it.
+const SETTINGS_LOCK_TICK_MS = 200;
+let settingsLockInterval = null;
+
+function normalizeSettingsLockDuration(value) {
+  const seconds = Number(value);
+  return SETTINGS_LOCK_OPTIONS.includes(seconds) ? seconds : 0;
+}
+
+function formatSettingsLockLabel(seconds) {
+  if (seconds === 0) {
+    return translate('settingsLock.option.off') || 'Off';
+  }
+  return translate('settingsLock.option.seconds', { seconds }) || `${seconds}s`;
+}
+
+function updateSettingsLockDisplay(seconds) {
+  const normalized = normalizeSettingsLockDuration(seconds);
+  const valueElement = document.getElementById('settingsLockDropdownValue');
+  if (valueElement) {
+    valueElement.textContent = formatSettingsLockLabel(normalized);
+  }
+  document.querySelectorAll('#settingsLockDropdownPanel .menu-inline-option').forEach((option) => {
+    const optionSeconds = Number(option.dataset.value);
+    option.textContent = formatSettingsLockLabel(optionSeconds);
+    option.classList.toggle('selected', optionSeconds === normalized);
+  });
+}
+
+function applySettingsLockDuration(value) {
+  const normalized = normalizeSettingsLockDuration(value);
+  currentSettingsLockDuration = normalized;
+  updateSettingsLockDisplay(normalized);
+  // Takes effect the next time the popup is opened
+  browser.storage.sync.set({ settingsLockDuration: normalized });
+}
+
+function setSettingsLockContentInert(isInert) {
+  const popupContainer = document.querySelector('.popup-container');
+  if (!popupContainer) return;
+  // Keep keyboard focus from reaching controls hidden behind the lock overlay
+  Array.from(popupContainer.children).forEach((child) => {
+    if (child.id !== 'settingsLockOverlay') {
+      child.inert = isInert;
+    }
+  });
+}
+
+function setupSettingsLock() {
+  const popupContainer = document.querySelector('.popup-container');
+  if (!popupContainer) return;
+
+  browser.storage.sync.get(['settingsLockDuration'], (result) => {
+    const duration = normalizeSettingsLockDuration(result && result.settingsLockDuration);
+    if (duration > 0) {
+      startSettingsLockCountdown(duration);
+    }
+    popupContainer.classList.remove('settings-lock-checking');
+  });
+}
+
+function startSettingsLockCountdown(duration) {
+  const popupContainer = document.querySelector('.popup-container');
+  const countdown = document.getElementById('settingsLockCountdown');
+  const progressBar = document.getElementById('settingsLockProgressBar');
+  if (!popupContainer || !countdown) return;
+
+  const totalMs = duration * 1000;
+  const endTime = Date.now() + totalMs;
+
+  popupContainer.classList.add('settings-locked');
+  setSettingsLockContentInert(true);
+
+  function unlock() {
+    clearInterval(settingsLockInterval);
+    settingsLockInterval = null;
+    setSettingsLockContentInert(false);
+    popupContainer.classList.remove('settings-locked');
+    popupContainer.classList.add('settings-unlocking');
+    setTimeout(() => popupContainer.classList.remove('settings-unlocking'), 250);
+  }
+
+  function updateCountdown() {
+    const remaining = Math.max(0, endTime - Date.now());
+    countdown.textContent = String(Math.ceil(remaining / 1000));
+    if (progressBar) {
+      progressBar.style.transform = `scaleX(${remaining / totalMs})`;
+    }
+    if (remaining <= 0) {
+      unlock();
+    }
+  }
+
+  if (settingsLockInterval) clearInterval(settingsLockInterval);
+  updateCountdown();
+  settingsLockInterval = setInterval(updateCountdown, SETTINGS_LOCK_TICK_MS);
 }
 
 // ===== CUSTOM MEME UPLOAD =====
@@ -1549,6 +1704,7 @@ function loadSettings() {
         if (currentSettings[settingId] !== undefined) toggle.checked = currentSettings[settingId];
       });
       updateThumbnailModeUI(currentSettings.hideVideoThumbnails);
+      currentSettingsLockDuration = normalizeSettingsLockDuration(currentSettings.settingsLockDuration);
       const popupContainer = document.querySelector('.popup-container');
       if (popupContainer) popupContainer.classList.toggle('disabled', !currentSettings.extensionEnabled);
       let savedAppearance = currentSettings.appearance || 'auto';
@@ -1842,6 +1998,7 @@ function setupDropdownListeners() {
       const val = option.dataset.value;
       if (type === 'appearance') applyAppearanceSetting(val);
       else if (type === 'language') applyLanguageSetting(val);
+      else if (type === 'settingsLock') applySettingsLockDuration(val);
       closeMenuInlineDropdowns();
     });
   });
