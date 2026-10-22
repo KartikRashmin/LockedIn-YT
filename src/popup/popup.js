@@ -43,11 +43,12 @@ const DEFAULT_SETTINGS = {
   customMeme: null,
   appearance: 'auto',
   language: 'auto',
-  settingsLockDuration: 0
+  settingsLockDuration: 0,
+  settingsLockShowCountdown: true
 };
 
 // Seconds the popup stays locked on open (0 = Settings Lock Timer off)
-const SETTINGS_LOCK_OPTIONS = [0, 5, 10, 15, 30, 60];
+const SETTINGS_LOCK_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 180, 300];
 
 const APPEARANCE_OPTIONS = ['auto', 'light', 'dark'];
 const APPEARANCE_LABEL_KEYS = {
@@ -124,6 +125,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Make yourself wait before changing settings each time you open LockedIn.',
     'settingsLock.option.off': 'Off',
     'settingsLock.option.seconds': '{seconds}s',
+    'menu.option.settingsLockCountdown': 'Show Countdown',
+    'menu.option.settingsLockCountdown.desc': 'Show the time left while settings are locked. Turn off to wait without knowing how long.',
+    'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Settings locked',
     'settingsLock.subtitle': 'Take a breath. Do you really need to change something?',
     'group.homepage': 'Homepage',
@@ -218,6 +222,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Espera unos segundos antes de cambiar los ajustes cada vez que abras LockedIn.',
     'settingsLock.option.off': 'Desactivado',
     'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockCountdown': 'Mostrar cuenta atrás',
+    'menu.option.settingsLockCountdown.desc': 'Muestra el tiempo restante mientras los ajustes están bloqueados. Desactívalo para esperar sin saber cuánto falta.',
+    'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Ajustes bloqueados',
     'settingsLock.subtitle': 'Respira. ¿De verdad necesitas cambiar algo?',
     'group.homepage': 'Página principal',
@@ -309,6 +316,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'हर बार LockedIn खोलने पर सेटिंग्स बदलने से पहले कुछ सेकंड रुकें।',
     'settingsLock.option.off': 'बंद',
     'settingsLock.option.seconds': '{seconds} से.',
+    'menu.option.settingsLockCountdown': 'उलटी गिनती दिखाएँ',
+    'menu.option.settingsLockCountdown.desc': 'सेटिंग्स लॉक रहने तक बचा समय दिखाएँ। बंद करें ताकि बिना जाने इंतज़ार करें कि कितना समय बचा है।',
+    'settingsLock.option.minutes': '{minutes} मि.',
     'settingsLock.title': 'सेटिंग्स लॉक हैं',
     'settingsLock.subtitle': 'गहरी साँस लें। क्या सच में कुछ बदलना ज़रूरी है?',
     'group.homepage': 'होमपेज',
@@ -400,6 +410,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Espere alguns segundos antes de alterar as configurações sempre que abrir o LockedIn.',
     'settingsLock.option.off': 'Desativado',
     'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockCountdown': 'Mostrar contagem regressiva',
+    'menu.option.settingsLockCountdown.desc': 'Mostra o tempo restante enquanto as configurações estão bloqueadas. Desative para esperar sem saber quanto falta.',
+    'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Configurações bloqueadas',
     'settingsLock.subtitle': 'Respire fundo. Você precisa mesmo mudar algo?',
     'group.homepage': 'Página inicial',
@@ -491,6 +504,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Attendez quelques secondes avant de modifier les réglages à chaque ouverture de LockedIn.',
     'settingsLock.option.off': 'Désactivé',
     'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockCountdown': 'Afficher le compte à rebours',
+    'menu.option.settingsLockCountdown.desc': 'Affiche le temps restant pendant le verrouillage. Désactivez pour attendre sans savoir combien de temps.',
+    'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Réglages verrouillés',
     'settingsLock.subtitle': 'Respirez. Avez-vous vraiment besoin de changer quelque chose ?',
     'group.homepage': 'Page d’accueil',
@@ -582,6 +598,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Warte bei jedem Öffnen von LockedIn ein paar Sekunden, bevor du Einstellungen ändern kannst.',
     'settingsLock.option.off': 'Aus',
     'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockCountdown': 'Countdown anzeigen',
+    'menu.option.settingsLockCountdown.desc': 'Zeigt die verbleibende Zeit während der Sperre. Deaktiviere es, um zu warten, ohne zu wissen, wie lange.',
+    'settingsLock.option.minutes': '{minutes} Min.',
     'settingsLock.title': 'Einstellungen gesperrt',
     'settingsLock.subtitle': 'Atme durch. Musst du wirklich etwas ändern?',
     'group.homepage': 'Startseite',
@@ -673,6 +692,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': '每次打开 LockedIn 时，需等待几秒才能更改设置。',
     'settingsLock.option.off': '关闭',
     'settingsLock.option.seconds': '{seconds}秒',
+    'menu.option.settingsLockCountdown': '显示倒计时',
+    'menu.option.settingsLockCountdown.desc': '设置锁定时显示剩余时间。关闭后，你将不知道还要等多久。',
+    'settingsLock.option.minutes': '{minutes}分钟',
     'settingsLock.title': '设置已锁定',
     'settingsLock.subtitle': '深呼吸。你真的需要更改什么吗？',
     'group.homepage': '主页',
@@ -766,6 +788,9 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': '每次開啟 LockedIn 時，需等待幾秒才能更改設定。',
     'settingsLock.option.off': '關閉',
     'settingsLock.option.seconds': '{seconds}秒',
+    'menu.option.settingsLockCountdown': '顯示倒數計時',
+    'menu.option.settingsLockCountdown.desc': '設定鎖定時顯示剩餘時間。關閉後，你將不知道還要等多久。',
+    'settingsLock.option.minutes': '{minutes}分鐘',
     'settingsLock.title': '設定已鎖定',
     'settingsLock.subtitle': '深呼吸。你真的需要更改什麼嗎？',
     'group.homepage': '主頁',
@@ -1502,7 +1527,21 @@ function formatSettingsLockLabel(seconds) {
   if (seconds === 0) {
     return translate('settingsLock.option.off') || 'Off';
   }
+  if (seconds >= 60) {
+    const minutes = seconds / 60;
+    return translate('settingsLock.option.minutes', { minutes }) || `${minutes} min`;
+  }
   return translate('settingsLock.option.seconds', { seconds }) || `${seconds}s`;
+}
+
+// Countdown text: plain seconds for short locks, m:ss once a lock is a minute or longer
+function formatSettingsLockRemaining(remainingSeconds, duration) {
+  if (duration < 60) {
+    return String(remainingSeconds);
+  }
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function updateSettingsLockDisplay(seconds) {
@@ -1515,6 +1554,10 @@ function updateSettingsLockDisplay(seconds) {
     const optionSeconds = Number(option.dataset.value);
     option.textContent = formatSettingsLockLabel(optionSeconds);
     option.classList.toggle('selected', optionSeconds === normalized);
+  });
+  // "Show Countdown" only matters while the timer is on
+  document.querySelectorAll('.settings-lock-countdown-row').forEach((row) => {
+    row.hidden = normalized === 0;
   });
 }
 
@@ -1541,24 +1584,24 @@ function setupSettingsLock() {
   const popupContainer = document.querySelector('.popup-container');
   if (!popupContainer) return;
 
-  browser.storage.sync.get(['settingsLockDuration'], (result) => {
+  browser.storage.sync.get(['settingsLockDuration', 'settingsLockShowCountdown'], (result) => {
     const duration = normalizeSettingsLockDuration(result && result.settingsLockDuration);
+    const showCountdown = !result || result.settingsLockShowCountdown !== false;
     if (duration > 0) {
-      startSettingsLockCountdown(duration);
+      startSettingsLockCountdown(duration, showCountdown);
     }
     popupContainer.classList.remove('settings-lock-checking');
   });
 }
 
-function startSettingsLockCountdown(duration) {
+function startSettingsLockCountdown(duration, showCountdown) {
   const popupContainer = document.querySelector('.popup-container');
   const countdown = document.getElementById('settingsLockCountdown');
-  const progressBar = document.getElementById('settingsLockProgressBar');
   if (!popupContainer || !countdown) return;
 
-  const totalMs = duration * 1000;
-  const endTime = Date.now() + totalMs;
+  const endTime = Date.now() + duration * 1000;
 
+  countdown.hidden = !showCountdown;
   popupContainer.classList.add('settings-locked');
   setSettingsLockContentInert(true);
 
@@ -1573,10 +1616,7 @@ function startSettingsLockCountdown(duration) {
 
   function updateCountdown() {
     const remaining = Math.max(0, endTime - Date.now());
-    countdown.textContent = String(Math.ceil(remaining / 1000));
-    if (progressBar) {
-      progressBar.style.transform = `scaleX(${remaining / totalMs})`;
-    }
+    countdown.textContent = formatSettingsLockRemaining(Math.ceil(remaining / 1000), duration);
     if (remaining <= 0) {
       unlock();
     }

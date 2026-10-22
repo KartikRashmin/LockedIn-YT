@@ -17,7 +17,6 @@
         </svg>
         <p class="settings-lock-title" id="settingsLockTitle" data-i18n-key="settingsLock.title">Settings locked</p>
         <p class="settings-lock-countdown" id="settingsLockCountdown" aria-live="polite">0</p>
-        <div class="settings-lock-progress"><div class="settings-lock-progress-bar" id="settingsLockProgressBar"></div></div>
         <p class="settings-lock-subtitle" id="settingsLockSubtitle" data-i18n-key="settingsLock.subtitle">Take a breath. Do you really need to change something?</p>
       </div>
     </div>
@@ -151,9 +150,25 @@
                 <button type="button" class="menu-inline-option" data-value="10">10s</button>
                 <button type="button" class="menu-inline-option" data-value="15">15s</button>
                 <button type="button" class="menu-inline-option" data-value="30">30s</button>
-                <button type="button" class="menu-inline-option" data-value="60">60s</button>
+                <button type="button" class="menu-inline-option" data-value="60">1 min</button>
+                <button type="button" class="menu-inline-option" data-value="120">2 min</button>
+                <button type="button" class="menu-inline-option" data-value="180">3 min</button>
+                <button type="button" class="menu-inline-option" data-value="300">5 min</button>
               </div>
             </div>
+          </div>
+
+          <!-- Settings Lock: show countdown (only shown while the timer is on) -->
+          <div class="menu-option-divider settings-lock-countdown-row"></div>
+          <div class="menu-option-row settings-lock-countdown-row">
+            <div class="menu-option-text">
+              <span class="menu-option-label" data-i18n-key="menu.option.settingsLockCountdown">Show Countdown</span>
+              <span class="menu-option-description" data-i18n-key="menu.option.settingsLockCountdown.desc">Show the time left while settings are locked. Turn off to wait without knowing how long.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" data-setting="settingsLockShowCountdown">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
       </div>
