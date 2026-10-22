@@ -7,7 +7,21 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="popup-container">
+  <div class="popup-container settings-lock-checking">
+    <!-- Settings Lock Overlay (shown on popup open when the Settings Lock Timer is on) -->
+    <div class="settings-lock-overlay" id="settingsLockOverlay" role="alertdialog" aria-labelledby="settingsLockTitle" aria-describedby="settingsLockSubtitle">
+      <div class="settings-lock-content">
+        <svg class="settings-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="11" width="16" height="10" rx="2"></rect>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+        <p class="settings-lock-title" id="settingsLockTitle" data-i18n-key="settingsLock.title">Settings locked</p>
+        <p class="settings-lock-countdown" id="settingsLockCountdown" aria-live="polite">0</p>
+        <div class="settings-lock-progress"><div class="settings-lock-progress-bar" id="settingsLockProgressBar"></div></div>
+        <p class="settings-lock-subtitle" id="settingsLockSubtitle" data-i18n-key="settingsLock.subtitle">Take a breath. Do you really need to change something?</p>
+      </div>
+    </div>
+
     <div class="popup-header">
       <button id="menuButton" class="menu-button" title="Menu" data-i18n-key="tooltip.menu" data-i18n-attr="title">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -113,6 +127,32 @@
                 <button type="button" class="menu-inline-option" data-value="zh-CN">简体中文</button>
                 <button type="button" class="menu-inline-option" data-value="zh-TW">繁体中文</button>
             </div>
+            </div>
+          </div>
+
+          <div class="menu-option-divider"></div>
+
+          <!-- Settings Lock Timer -->
+          <div class="menu-option-row">
+            <div class="menu-option-text">
+              <span class="menu-option-label" data-i18n-key="menu.option.settingsLock">Settings Lock Timer</span>
+              <span class="menu-option-description" data-i18n-key="menu.option.settingsLock.desc">Make yourself wait before changing settings each time you open LockedIn.</span>
+            </div>
+            <div class="menu-dropdown-container">
+              <button class="menu-inline-trigger" type="button" id="settingsLockDropdownTrigger" data-menu-dropdown-trigger data-menu-dropdown-target="settingsLockDropdownPanel" aria-expanded="false">
+                <span class="menu-inline-value" id="settingsLockDropdownValue">Off</span>
+                <svg class="menu-inline-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="menu-inline-dropdown" id="settingsLockDropdownPanel" data-dropdown-type="settingsLock">
+                <button type="button" class="menu-inline-option" data-value="0" data-i18n-key="settingsLock.option.off">Off</button>
+                <button type="button" class="menu-inline-option" data-value="5">5s</button>
+                <button type="button" class="menu-inline-option" data-value="10">10s</button>
+                <button type="button" class="menu-inline-option" data-value="15">15s</button>
+                <button type="button" class="menu-inline-option" data-value="30">30s</button>
+                <button type="button" class="menu-inline-option" data-value="60">60s</button>
+              </div>
             </div>
           </div>
         </div>
