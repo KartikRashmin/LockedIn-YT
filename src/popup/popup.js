@@ -44,7 +44,7 @@ const DEFAULT_SETTINGS = {
   appearance: 'auto',
   language: 'auto',
   settingsLockDuration: 0,
-  settingsLockShowCountdown: true
+  settingsLockHideCountdown: false
 };
 
 // Seconds the popup stays locked on open (0 = Settings Lock Timer off)
@@ -125,8 +125,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Make yourself wait before changing settings each time you open LockedIn.',
     'settingsLock.option.off': 'Off',
     'settingsLock.option.seconds': '{seconds}s',
-    'menu.option.settingsLockCountdown': 'Show Countdown',
-    'menu.option.settingsLockCountdown.desc': 'Show the time left while settings are locked. Turn off to wait without knowing how long.',
+    'menu.option.settingsLockHideCountdown': 'Hide Countdown',
+    'menu.option.settingsLockHideCountdown.desc': 'Hide the time left while settings are locked, so you wait without knowing how long.',
     'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Settings locked',
     'settingsLock.subtitle': 'Take a breath. Do you really need to change something?',
@@ -222,8 +222,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Espera unos segundos antes de cambiar los ajustes cada vez que abras LockedIn.',
     'settingsLock.option.off': 'Desactivado',
     'settingsLock.option.seconds': '{seconds} s',
-    'menu.option.settingsLockCountdown': 'Mostrar cuenta atrás',
-    'menu.option.settingsLockCountdown.desc': 'Muestra el tiempo restante mientras los ajustes están bloqueados. Desactívalo para esperar sin saber cuánto falta.',
+    'menu.option.settingsLockHideCountdown': 'Ocultar cuenta atrás',
+    'menu.option.settingsLockHideCountdown.desc': 'Oculta el tiempo restante mientras los ajustes están bloqueados, para que esperes sin saber cuánto falta.',
     'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Ajustes bloqueados',
     'settingsLock.subtitle': 'Respira. ¿De verdad necesitas cambiar algo?',
@@ -316,8 +316,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'हर बार LockedIn खोलने पर सेटिंग्स बदलने से पहले कुछ सेकंड रुकें।',
     'settingsLock.option.off': 'बंद',
     'settingsLock.option.seconds': '{seconds} से.',
-    'menu.option.settingsLockCountdown': 'उलटी गिनती दिखाएँ',
-    'menu.option.settingsLockCountdown.desc': 'सेटिंग्स लॉक रहने तक बचा समय दिखाएँ। बंद करें ताकि बिना जाने इंतज़ार करें कि कितना समय बचा है।',
+    'menu.option.settingsLockHideCountdown': 'उलटी गिनती छुपाएँ',
+    'menu.option.settingsLockHideCountdown.desc': 'सेटिंग्स लॉक रहने तक बचा समय छुपाएँ, ताकि आप बिना जाने इंतज़ार करें कि कितना समय बचा है।',
     'settingsLock.option.minutes': '{minutes} मि.',
     'settingsLock.title': 'सेटिंग्स लॉक हैं',
     'settingsLock.subtitle': 'गहरी साँस लें। क्या सच में कुछ बदलना ज़रूरी है?',
@@ -410,8 +410,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Espere alguns segundos antes de alterar as configurações sempre que abrir o LockedIn.',
     'settingsLock.option.off': 'Desativado',
     'settingsLock.option.seconds': '{seconds} s',
-    'menu.option.settingsLockCountdown': 'Mostrar contagem regressiva',
-    'menu.option.settingsLockCountdown.desc': 'Mostra o tempo restante enquanto as configurações estão bloqueadas. Desative para esperar sem saber quanto falta.',
+    'menu.option.settingsLockHideCountdown': 'Ocultar contagem regressiva',
+    'menu.option.settingsLockHideCountdown.desc': 'Oculta o tempo restante enquanto as configurações estão bloqueadas, para você esperar sem saber quanto falta.',
     'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Configurações bloqueadas',
     'settingsLock.subtitle': 'Respire fundo. Você precisa mesmo mudar algo?',
@@ -504,8 +504,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Attendez quelques secondes avant de modifier les réglages à chaque ouverture de LockedIn.',
     'settingsLock.option.off': 'Désactivé',
     'settingsLock.option.seconds': '{seconds} s',
-    'menu.option.settingsLockCountdown': 'Afficher le compte à rebours',
-    'menu.option.settingsLockCountdown.desc': 'Affiche le temps restant pendant le verrouillage. Désactivez pour attendre sans savoir combien de temps.',
+    'menu.option.settingsLockHideCountdown': 'Masquer le compte à rebours',
+    'menu.option.settingsLockHideCountdown.desc': 'Masque le temps restant pendant le verrouillage, pour attendre sans savoir combien de temps.',
     'settingsLock.option.minutes': '{minutes} min',
     'settingsLock.title': 'Réglages verrouillés',
     'settingsLock.subtitle': 'Respirez. Avez-vous vraiment besoin de changer quelque chose ?',
@@ -598,8 +598,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': 'Warte bei jedem Öffnen von LockedIn ein paar Sekunden, bevor du Einstellungen ändern kannst.',
     'settingsLock.option.off': 'Aus',
     'settingsLock.option.seconds': '{seconds} s',
-    'menu.option.settingsLockCountdown': 'Countdown anzeigen',
-    'menu.option.settingsLockCountdown.desc': 'Zeigt die verbleibende Zeit während der Sperre. Deaktiviere es, um zu warten, ohne zu wissen, wie lange.',
+    'menu.option.settingsLockHideCountdown': 'Countdown ausblenden',
+    'menu.option.settingsLockHideCountdown.desc': 'Blendet die verbleibende Zeit während der Sperre aus, sodass du wartest, ohne zu wissen, wie lange.',
     'settingsLock.option.minutes': '{minutes} Min.',
     'settingsLock.title': 'Einstellungen gesperrt',
     'settingsLock.subtitle': 'Atme durch. Musst du wirklich etwas ändern?',
@@ -692,8 +692,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': '每次打开 LockedIn 时，需等待几秒才能更改设置。',
     'settingsLock.option.off': '关闭',
     'settingsLock.option.seconds': '{seconds}秒',
-    'menu.option.settingsLockCountdown': '显示倒计时',
-    'menu.option.settingsLockCountdown.desc': '设置锁定时显示剩余时间。关闭后，你将不知道还要等多久。',
+    'menu.option.settingsLockHideCountdown': '隐藏倒计时',
+    'menu.option.settingsLockHideCountdown.desc': '设置锁定时隐藏剩余时间，让你不知道还要等多久。',
     'settingsLock.option.minutes': '{minutes}分钟',
     'settingsLock.title': '设置已锁定',
     'settingsLock.subtitle': '深呼吸。你真的需要更改什么吗？',
@@ -788,8 +788,8 @@ const I18N_STRINGS = {
     'menu.option.settingsLock.desc': '每次開啟 LockedIn 時，需等待幾秒才能更改設定。',
     'settingsLock.option.off': '關閉',
     'settingsLock.option.seconds': '{seconds}秒',
-    'menu.option.settingsLockCountdown': '顯示倒數計時',
-    'menu.option.settingsLockCountdown.desc': '設定鎖定時顯示剩餘時間。關閉後，你將不知道還要等多久。',
+    'menu.option.settingsLockHideCountdown': '隱藏倒數計時',
+    'menu.option.settingsLockHideCountdown.desc': '設定鎖定時隱藏剩餘時間，讓你不知道還要等多久。',
     'settingsLock.option.minutes': '{minutes}分鐘',
     'settingsLock.title': '設定已鎖定',
     'settingsLock.subtitle': '深呼吸。你真的需要更改什麼嗎？',
@@ -1555,7 +1555,7 @@ function updateSettingsLockDisplay(seconds) {
     option.textContent = formatSettingsLockLabel(optionSeconds);
     option.classList.toggle('selected', optionSeconds === normalized);
   });
-  // "Show Countdown" only matters while the timer is on
+  // "Hide Countdown" only matters while the timer is on
   document.querySelectorAll('.settings-lock-countdown-row').forEach((row) => {
     row.hidden = normalized === 0;
   });
@@ -1584,9 +1584,9 @@ function setupSettingsLock() {
   const popupContainer = document.querySelector('.popup-container');
   if (!popupContainer) return;
 
-  browser.storage.sync.get(['settingsLockDuration', 'settingsLockShowCountdown'], (result) => {
+  browser.storage.sync.get(['settingsLockDuration', 'settingsLockHideCountdown'], (result) => {
     const duration = normalizeSettingsLockDuration(result && result.settingsLockDuration);
-    const showCountdown = !result || result.settingsLockShowCountdown !== false;
+    const showCountdown = !result || result.settingsLockHideCountdown !== true;
     if (duration > 0) {
       startSettingsLockCountdown(duration, showCountdown);
     }

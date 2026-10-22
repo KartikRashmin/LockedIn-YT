@@ -958,7 +958,7 @@ body {
   margin: 0;
 }
 
-/* "Show Countdown" off: wait without seeing how long is left */
+/* "Hide Countdown" on: wait without seeing how long is left */
 .settings-lock-countdown[hidden],
 .settings-lock-countdown-row[hidden] {
   display: none;
