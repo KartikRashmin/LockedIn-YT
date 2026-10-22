@@ -99,6 +99,7 @@ LockedIn is an open-source browser extension that helps you focus on YouTube by 
 - Hide Comments & Live Chat
 - Hide Search Recommendations, Subscriptions & "More From YouTube"
 - Disable Autoplay
+- Settings Lock Timer (wait up to 5 minutes before you can change settings each time you open LockedIn, with or without a visible countdown)
 - Instant element hiding with zero delays
 
 </td>
