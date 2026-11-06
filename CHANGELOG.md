@@ -1,3 +1,12 @@
+## [1.2.3] - 2026-11-06
+### Added
+- Added an optional Settings Lock Timer with waits from 5 seconds to 5 minutes before settings can be changed. Each popup opening starts a fresh wait, and settings unlock automatically when it ends.
+- Added a Hide Countdown option and a minimal lock screen with a circular countdown that decreases once per second.
+- Added keyboard focus handling, storage loading safeguards, and regression tests for timer startup, expiry, and popup reopening.
+
+### Credits
+- Thanks to [@joana-lima-melo](https://github.com/joana-lima-melo) for the original Settings Lock Timer contribution in [#38](https://github.com/KartikRashmin/LockedIn-YT/pull/38). This release incorporates and refines that contribution with redesigned UI, popup lifecycle fixes, and additional validation. The original author commits are preserved.
+
 ## [1.2.2] - 2026-10-01
 ### Fixed
 - Fixed hiding of "Get more from memberships" brand video shelves on the homepage
