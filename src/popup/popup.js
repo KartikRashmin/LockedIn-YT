@@ -42,8 +42,13 @@ const DEFAULT_SETTINGS = {
   breakDuration: 5,
   customMeme: null,
   appearance: 'auto',
-  language: 'auto'
+  language: 'auto',
+  settingsLockDuration: 0,
+  settingsLockHideCountdown: false
 };
+
+// Seconds the popup stays locked on open (0 = Settings Lock Timer off)
+const SETTINGS_LOCK_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 180, 300];
 
 const APPEARANCE_OPTIONS = ['auto', 'light', 'dark'];
 const APPEARANCE_LABEL_KEYS = {
@@ -116,6 +121,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Light',
     'appearance.option.dark': 'Dark',
     'language.option.auto': 'Auto',
+    'menu.option.settingsLock': 'Settings Lock Timer',
+    'menu.option.settingsLock.desc': 'Applies next time you open LockedIn. Closing the popup restarts the wait.',
+    'settingsLock.option.off': 'Off',
+    'settingsLock.option.seconds': '{seconds}s',
+    'menu.option.settingsLockHideCountdown': 'Hide Countdown',
+    'menu.option.settingsLockHideCountdown.desc': 'Hide the time left while settings are locked, so you wait without knowing how long.',
+    'settingsLock.option.minutes': '{minutes} min',
+    'settingsLock.title': 'Settings locked',
+    'settingsLock.subtitle': 'Take a breath. Do you really need to change something?',
+    'settingsLock.errorTitle': 'Unable to load settings',
+    'settingsLock.errorSubtitle': 'Close and reopen LockedIn to try again.',
+    'settingsLock.secondsLeft': 'seconds left',
+    'settingsLock.automatic': 'Unlocks automatically when the timer ends.',
     'group.homepage': 'Homepage',
     'group.subscriptionsPage': 'Subscriptions Page',
     'setting.hideFeed': 'Hide Homepage Feed',
@@ -204,6 +222,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Claro',
     'appearance.option.dark': 'Oscuro',
     'language.option.auto': 'Automático',
+    'menu.option.settingsLock': 'Temporizador de bloqueo',
+    'menu.option.settingsLock.desc': 'Se aplica al volver a abrir LockedIn. Cerrar la ventana reinicia la espera.',
+    'settingsLock.option.off': 'Desactivado',
+    'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockHideCountdown': 'Ocultar cuenta atrás',
+    'menu.option.settingsLockHideCountdown.desc': 'Oculta el tiempo restante mientras los ajustes están bloqueados, para que esperes sin saber cuánto falta.',
+    'settingsLock.option.minutes': '{minutes} min',
+    'settingsLock.title': 'Ajustes bloqueados',
+    'settingsLock.subtitle': 'Respira. ¿De verdad necesitas cambiar algo?',
+    'settingsLock.errorTitle': 'No se pudieron cargar los ajustes',
+    'settingsLock.errorSubtitle': 'Cierra y vuelve a abrir LockedIn, o inténtalo de nuevo.',
+    'settingsLock.secondsLeft': 'segundos restantes',
+    'settingsLock.automatic': 'Los ajustes se activarán automáticamente.',
     'group.homepage': 'Página principal',
     'group.subscriptionsPage': 'Página de suscripciones',
     'setting.hideFeed': 'Ocultar feed de inicio',
@@ -289,6 +320,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'हल्का',
     'appearance.option.dark': 'गहरा',
     'language.option.auto': 'स्वचालित',
+    'menu.option.settingsLock': 'सेटिंग्स लॉक टाइमर',
+    'menu.option.settingsLock.desc': 'अगली बार LockedIn खोलने पर लागू होगा। पॉपअप बंद करने पर इंतज़ार फिर शुरू होगा।',
+    'settingsLock.option.off': 'बंद',
+    'settingsLock.option.seconds': '{seconds} से.',
+    'menu.option.settingsLockHideCountdown': 'उलटी गिनती छुपाएँ',
+    'menu.option.settingsLockHideCountdown.desc': 'सेटिंग्स लॉक रहने तक बचा समय छुपाएँ, ताकि आप बिना जाने इंतज़ार करें कि कितना समय बचा है।',
+    'settingsLock.option.minutes': '{minutes} मि.',
+    'settingsLock.title': 'सेटिंग्स लॉक हैं',
+    'settingsLock.subtitle': 'गहरी साँस लें। क्या सच में कुछ बदलना ज़रूरी है?',
+    'settingsLock.errorTitle': 'सेटिंग्स लोड नहीं हो सकीं',
+    'settingsLock.errorSubtitle': 'LockedIn बंद करके फिर खोलें या दोबारा प्रयास करें।',
+    'settingsLock.secondsLeft': 'सेकंड बाकी',
+    'settingsLock.automatic': 'सेटिंग्स अपने आप चालू हो जाएँगी।',
     'group.homepage': 'होमपेज',
     'group.subscriptionsPage': 'सब्सक्रिप्शन पेज',
     'setting.hideFeed': 'होमपेज फ़ीड छुपाएँ',
@@ -374,6 +418,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Claro',
     'appearance.option.dark': 'Escuro',
     'language.option.auto': 'Automático',
+    'menu.option.settingsLock': 'Temporizador de bloqueio',
+    'menu.option.settingsLock.desc': 'Vale na próxima abertura do LockedIn. Fechar a janela reinicia a espera.',
+    'settingsLock.option.off': 'Desativado',
+    'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockHideCountdown': 'Ocultar contagem regressiva',
+    'menu.option.settingsLockHideCountdown.desc': 'Oculta o tempo restante enquanto as configurações estão bloqueadas, para você esperar sem saber quanto falta.',
+    'settingsLock.option.minutes': '{minutes} min',
+    'settingsLock.title': 'Configurações bloqueadas',
+    'settingsLock.subtitle': 'Respire fundo. Você precisa mesmo mudar algo?',
+    'settingsLock.errorTitle': 'Não foi possível carregar as configurações',
+    'settingsLock.errorSubtitle': 'Feche e reabra o LockedIn ou tente novamente.',
+    'settingsLock.secondsLeft': 'segundos restantes',
+    'settingsLock.automatic': 'As configurações serão reativadas automaticamente.',
     'group.homepage': 'Página inicial',
     'group.subscriptionsPage': 'Página de inscrições',
     'setting.hideFeed': 'Ocultar feed inicial',
@@ -459,6 +516,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Clair',
     'appearance.option.dark': 'Sombre',
     'language.option.auto': 'Automatique',
+    'menu.option.settingsLock': 'Minuteur de verrouillage',
+    'menu.option.settingsLock.desc': 'Actif à la prochaine ouverture de LockedIn. Fermer la fenêtre relance l’attente.',
+    'settingsLock.option.off': 'Désactivé',
+    'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockHideCountdown': 'Masquer le compte à rebours',
+    'menu.option.settingsLockHideCountdown.desc': 'Masque le temps restant pendant le verrouillage, pour attendre sans savoir combien de temps.',
+    'settingsLock.option.minutes': '{minutes} min',
+    'settingsLock.title': 'Réglages verrouillés',
+    'settingsLock.subtitle': 'Respirez. Avez-vous vraiment besoin de changer quelque chose ?',
+    'settingsLock.errorTitle': 'Impossible de charger les réglages',
+    'settingsLock.errorSubtitle': 'Fermez et rouvrez LockedIn ou réessayez.',
+    'settingsLock.secondsLeft': 'secondes restantes',
+    'settingsLock.automatic': 'Les réglages seront réactivés automatiquement.',
     'group.homepage': 'Page d’accueil',
     'group.subscriptionsPage': 'Page des abonnements',
     'setting.hideFeed': 'Masquer le flux d’accueil',
@@ -544,6 +614,19 @@ const I18N_STRINGS = {
     'appearance.option.light': 'Hell',
     'appearance.option.dark': 'Dunkel',
     'language.option.auto': 'Automatisch',
+    'menu.option.settingsLock': 'Einstellungssperre',
+    'menu.option.settingsLock.desc': 'Gilt beim nächsten Öffnen von LockedIn. Schließen startet die Wartezeit neu.',
+    'settingsLock.option.off': 'Aus',
+    'settingsLock.option.seconds': '{seconds} s',
+    'menu.option.settingsLockHideCountdown': 'Countdown ausblenden',
+    'menu.option.settingsLockHideCountdown.desc': 'Blendet die verbleibende Zeit während der Sperre aus, sodass du wartest, ohne zu wissen, wie lange.',
+    'settingsLock.option.minutes': '{minutes} Min.',
+    'settingsLock.title': 'Einstellungen gesperrt',
+    'settingsLock.subtitle': 'Atme durch. Musst du wirklich etwas ändern?',
+    'settingsLock.errorTitle': 'Einstellungen konnten nicht geladen werden',
+    'settingsLock.errorSubtitle': 'Schließe und öffne LockedIn erneut oder versuche es noch einmal.',
+    'settingsLock.secondsLeft': 'Sekunden übrig',
+    'settingsLock.automatic': 'Die Einstellungen werden automatisch wieder freigegeben.',
     'group.homepage': 'Startseite',
     'group.subscriptionsPage': 'Abonnementseite',
     'setting.hideFeed': 'Startseiten-Feed ausblenden',
@@ -629,6 +712,19 @@ const I18N_STRINGS = {
     'appearance.option.light': '浅色',
     'appearance.option.dark': '深色',
     'language.option.auto': '自动',
+    'menu.option.settingsLock': '设置锁定计时器',
+    'menu.option.settingsLock.desc': '下次打开 LockedIn 时生效。关闭弹出窗口会重置等待时间。',
+    'settingsLock.option.off': '关闭',
+    'settingsLock.option.seconds': '{seconds}秒',
+    'menu.option.settingsLockHideCountdown': '隐藏倒计时',
+    'menu.option.settingsLockHideCountdown.desc': '设置锁定时隐藏剩余时间，让你不知道还要等多久。',
+    'settingsLock.option.minutes': '{minutes}分钟',
+    'settingsLock.title': '设置已锁定',
+    'settingsLock.subtitle': '深呼吸。你真的需要更改什么吗？',
+    'settingsLock.errorTitle': '无法加载设置',
+    'settingsLock.errorSubtitle': '请关闭并重新打开 LockedIn，或重试。',
+    'settingsLock.secondsLeft': '秒后解锁',
+    'settingsLock.automatic': '设置将自动恢复可用。',
     'group.homepage': '主页',
     'group.subscriptionsPage': '订阅页面',
     'setting.hideFeed': '隐藏首页信息流',
@@ -716,6 +812,19 @@ const I18N_STRINGS = {
     'appearance.option.light': '淺色',
     'appearance.option.dark': '深色',
     'language.option.auto': '自動',
+    'menu.option.settingsLock': '設定鎖定計時器',
+    'menu.option.settingsLock.desc': '下次開啟 LockedIn 時生效。關閉彈出視窗會重設等待時間。',
+    'settingsLock.option.off': '關閉',
+    'settingsLock.option.seconds': '{seconds}秒',
+    'menu.option.settingsLockHideCountdown': '隱藏倒數計時',
+    'menu.option.settingsLockHideCountdown.desc': '設定鎖定時隱藏剩餘時間，讓你不知道還要等多久。',
+    'settingsLock.option.minutes': '{minutes}分鐘',
+    'settingsLock.title': '設定已鎖定',
+    'settingsLock.subtitle': '深呼吸。你真的需要更改什麼嗎？',
+    'settingsLock.errorTitle': '無法載入設定',
+    'settingsLock.errorSubtitle': '請關閉並重新開啟 LockedIn，或重試。',
+    'settingsLock.secondsLeft': '秒後解鎖',
+    'settingsLock.automatic': '設定將自動恢復可用。',
     'group.homepage': '主頁',
     'group.subscriptionsPage': '訂閱頁面',
     'setting.hideFeed': '隱藏首頁信息流',
@@ -789,6 +898,7 @@ let activeLanguage = FALLBACK_LANGUAGE;
 let currentAppearanceValue = 'auto';
 let currentLanguagePreference = 'auto';
 let currentThumbnailMode = 'off';
+let currentSettingsLockDuration = 0;
 
 function normalizeThumbnailMode(value) {
   if (value === true) return 'reveal-on-hover';
@@ -920,6 +1030,7 @@ function applyTranslations(languageCode) {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+  setupSettingsLockLifecycle();
   displayVersion();
   setupToggleListeners();
   setupGroupCollapsibles();
@@ -986,8 +1097,9 @@ function setupGroupCollapsibles() {
 function displayVersion() {
   const versionElement = document.querySelector('.version');
   if (versionElement) {
-    versionElement.textContent = `v.1.2.2`;
-    versionElement.setAttribute('aria-label', `Version 1.2.2`);
+    const version = browser.runtime.getManifest().version;
+    versionElement.textContent = `v.${version}`;
+    versionElement.setAttribute('aria-label', `Version ${version}`);
   }
 }
 
@@ -1320,6 +1432,7 @@ function applyLanguageSetting(value, options = {}) {
   updateThumbnailModeUI(currentThumbnailMode);
   updateMenuDropdownDisplay('language', normalized);
   updateMenuDropdownDisplay('appearance', currentAppearanceValue);
+  updateSettingsLockDisplay(currentSettingsLockDuration);
   browser.storage.sync.get(['extensionEnabled', 'takeBreak', 'breakStartTime', 'breakDuration'], (state) => {
     if (state && state.takeBreak && state.breakStartTime && state.breakDuration && state.extensionEnabled === false) {
       startBreakCountdown(Number(state.breakStartTime), Number(state.breakDuration));
@@ -1430,6 +1543,216 @@ function startBreakCountdown(startTime, duration) {
 
   updateTimer();
   breakInterval = setInterval(updateTimer, 1000);
+}
+
+// ===== SETTINGS LOCK TIMER =====
+// Preferences sync across devices; each popup opening starts its own countdown.
+let stopSettingsLockCountdown = null;
+let cancelSettingsLockSetup = null;
+
+function normalizeSettingsLockDuration(value) {
+  const seconds = Number(value);
+  return SETTINGS_LOCK_OPTIONS.includes(seconds) ? seconds : 0;
+}
+
+function formatSettingsLockLabel(seconds) {
+  if (seconds === 0) {
+    return translate('settingsLock.option.off') || 'Off';
+  }
+  if (seconds >= 60) {
+    const minutes = seconds / 60;
+    return translate('settingsLock.option.minutes', { minutes }) || `${minutes} min`;
+  }
+  return translate('settingsLock.option.seconds', { seconds }) || `${seconds}s`;
+}
+
+function updateSettingsLockDisplay(seconds) {
+  const normalized = normalizeSettingsLockDuration(seconds);
+  const valueElement = document.getElementById('settingsLockDropdownValue');
+  if (valueElement) {
+    valueElement.textContent = formatSettingsLockLabel(normalized);
+  }
+  document.querySelectorAll('#settingsLockDropdownPanel .menu-inline-option').forEach((option) => {
+    const optionSeconds = Number(option.dataset.value);
+    option.textContent = formatSettingsLockLabel(optionSeconds);
+    option.classList.toggle('selected', optionSeconds === normalized);
+  });
+  // "Hide Countdown" only matters while the timer is on
+  document.querySelectorAll('.settings-lock-countdown-row').forEach((row) => {
+    row.hidden = normalized === 0;
+  });
+}
+
+function applySettingsLockDuration(value) {
+  const normalized = normalizeSettingsLockDuration(value);
+  // Only display a new preference after storage confirms it was saved.
+  browser.storage.sync.set({ settingsLockDuration: normalized }, () => {
+    const error = browser.runtime.lastError;
+    if (error) {
+      console.error('LockedIn: Failed to save settings lock duration', error);
+      return;
+    }
+    currentSettingsLockDuration = normalized;
+    updateSettingsLockDisplay(normalized);
+  });
+}
+
+function setSettingsLockContentInert(isInert) {
+  const popupContainer = document.querySelector('.popup-container');
+  if (!popupContainer) return;
+  // Keep keyboard focus from reaching controls hidden behind the lock overlay
+  Array.from(popupContainer.children).forEach((child) => {
+    if (child.id !== 'settingsLockOverlay') {
+      child.inert = isInert;
+    }
+  });
+}
+
+// Callback storage APIs work with the existing Chromium and Firefox adapter.
+function settingsLockStorage(method, area, value) {
+  return new Promise((resolve, reject) => {
+    browser.storage[area][method](value, (result) => {
+      const error = browser.runtime.lastError;
+      if (error) reject(new Error(error.message));
+      else resolve(result);
+    });
+  });
+}
+
+// Firefox can preload the popup before it is opened. Only spend the wait while
+// the popup is actually visible and focused; a hidden/reused view starts afresh.
+function setupSettingsLockLifecycle() {
+  let active = false;
+  const popupContainer = document.querySelector('.popup-container');
+  function hide() {
+    active = false;
+    cancelSettingsLockSetup?.();
+    stopSettingsLockCountdown?.();
+    setSettingsLockContentInert(true);
+    popupContainer.classList.add('settings-lock-checking');
+    popupContainer.classList.remove('settings-locked');
+  }
+  function show() {
+    if (active || document.hidden || !document.hasFocus()) return;
+    active = true;
+    setupSettingsLock();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) hide();
+    else show();
+  });
+  window.addEventListener('focus', show);
+  window.addEventListener('blur', hide);
+  window.addEventListener('pageshow', show);
+  window.addEventListener('pagehide', hide);
+  show();
+}
+
+async function setupSettingsLock() {
+  const popupContainer = document.querySelector('.popup-container');
+  if (!popupContainer) return;
+  cancelSettingsLockSetup?.();
+  stopSettingsLockCountdown?.();
+  setSettingsLockContentInert(true);
+  let settled = false;
+  function showLoadError() {
+    settled = true;
+    clearTimeout(timeout);
+    stopSettingsLockCountdown?.();
+    for (const [id, key] of [['settingsLockTitle', 'settingsLock.errorTitle'], ['settingsLockSubtitle', 'settingsLock.errorSubtitle']]) {
+      const element = document.getElementById(id);
+      element.dataset.i18nKey = key;
+      element.textContent = translate(key);
+    }
+    document.getElementById('settingsLockTimer').hidden = true;
+    document.getElementById('settingsLockFooter').hidden = true;
+    popupContainer.classList.add('settings-locked');
+    popupContainer.classList.remove('settings-lock-checking');
+    document.getElementById('settingsLockOverlay').focus();
+  }
+  const timeout = setTimeout(showLoadError, 10000);
+  cancelSettingsLockSetup = () => {
+    settled = true;
+    clearTimeout(timeout);
+  };
+  try {
+    const preferences = await settingsLockStorage('get', 'sync', ['settingsLockDuration', 'settingsLockHideCountdown']);
+    if (settled) return;
+    if (!preferences || typeof preferences !== 'object') throw new Error('Missing settings');
+    for (const [id, key] of [['settingsLockTitle', 'settingsLock.title'], ['settingsLockSubtitle', 'settingsLock.subtitle']]) {
+      const element = document.getElementById(id);
+      element.dataset.i18nKey = key;
+      element.textContent = translate(key);
+    }
+    document.getElementById('settingsLockFooter').hidden = false;
+    const duration = normalizeSettingsLockDuration(preferences.settingsLockDuration);
+    if (duration > 0) {
+      const state = { expiresAt: Date.now() + duration * 1000, duration };
+      startSettingsLockCountdown(state, preferences.settingsLockHideCountdown !== true);
+    } else {
+      setSettingsLockContentInert(false);
+    }
+    clearTimeout(timeout);
+    popupContainer.classList.remove('settings-lock-checking');
+  } catch (error) {
+    if (!settled) showLoadError();
+  }
+}
+
+function startSettingsLockCountdown(state, showCountdown) {
+  stopSettingsLockCountdown?.();
+  const popupContainer = document.querySelector('.popup-container');
+  const countdown = document.getElementById('settingsLockCountdown');
+  const progress = document.getElementById('settingsLockProgress');
+  const overlay = document.getElementById('settingsLockOverlay');
+  let frame = null;
+  let stopped = false;
+  let lastSeconds = null;
+  let keyboardInteraction = false;
+  const onKeyDown = () => { keyboardInteraction = true; };
+  const onPointerDown = () => { keyboardInteraction = false; };
+  function cleanup() {
+    stopped = true;
+    cancelAnimationFrame(frame);
+    document.removeEventListener('keydown', onKeyDown, true);
+    document.removeEventListener('pointerdown', onPointerDown, true);
+    window.removeEventListener('pagehide', cleanup);
+  }
+  stopSettingsLockCountdown = cleanup;
+  document.getElementById('settingsLockTimer').hidden = !showCountdown;
+  popupContainer.classList.add('settings-locked');
+  popupContainer.classList.remove('settings-lock-checking');
+  overlay.focus();
+  document.addEventListener('keydown', onKeyDown, true);
+  document.addEventListener('pointerdown', onPointerDown, true);
+  window.addEventListener('pagehide', cleanup);
+
+  function updateCountdown() {
+    if (stopped) return;
+    // Recompute from this popup’s deadline so throttled frames do not cause drift.
+    const remaining = Math.max(0, state.expiresAt - Date.now());
+    const seconds = Math.ceil(remaining / 1000);
+    if (seconds !== lastSeconds) {
+      countdown.textContent = String(seconds);
+      // Step the ring by one second of the original duration, with no tweening.
+      const elapsedSeconds = state.duration - Math.min(state.duration, seconds);
+      progress.setAttribute('stroke-dashoffset', String(-100 * elapsedSeconds / state.duration));
+    }
+    lastSeconds = seconds;
+    if (remaining === 0) {
+      cleanup();
+      const restoreFocus = overlay.contains(document.activeElement);
+      setSettingsLockContentInert(false);
+      if (restoreFocus) {
+        if (keyboardInteraction) document.getElementById('menuButton').focus();
+        else overlay.blur();
+      }
+      popupContainer.classList.remove('settings-locked');
+      return;
+    }
+    frame = requestAnimationFrame(updateCountdown);
+  }
+  updateCountdown();
 }
 
 // ===== CUSTOM MEME UPLOAD =====
@@ -1549,6 +1872,7 @@ function loadSettings() {
         if (currentSettings[settingId] !== undefined) toggle.checked = currentSettings[settingId];
       });
       updateThumbnailModeUI(currentSettings.hideVideoThumbnails);
+      currentSettingsLockDuration = normalizeSettingsLockDuration(currentSettings.settingsLockDuration);
       const popupContainer = document.querySelector('.popup-container');
       if (popupContainer) popupContainer.classList.toggle('disabled', !currentSettings.extensionEnabled);
       let savedAppearance = currentSettings.appearance || 'auto';
@@ -1842,6 +2166,7 @@ function setupDropdownListeners() {
       const val = option.dataset.value;
       if (type === 'appearance') applyAppearanceSetting(val);
       else if (type === 'language') applyLanguageSetting(val);
+      else if (type === 'settingsLock') applySettingsLockDuration(val);
       closeMenuInlineDropdowns();
     });
   });
