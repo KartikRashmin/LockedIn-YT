@@ -68,6 +68,7 @@ Write-Host "Creating source ZIP..." -ForegroundColor White
 $sourceItems = @(
     "src",
     "scripts",
+    "tests",
     "project-docs",
     "README.md",
     "CHANGELOG.md",

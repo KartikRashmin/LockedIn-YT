@@ -52,6 +52,12 @@ If something isn't working right or you have an idea for improvement:
 
 ## Testing
 
+Run the focused regression tests with Node.js 18 or newer:
+
+```bash
+node --test tests/*.test.cjs
+```
+
 Before submitting a PR:
 
 1. Test on Firefox

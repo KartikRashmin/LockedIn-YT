@@ -156,7 +156,7 @@ echo "  ✓ Cleaned up temporary build files."
 # 3. BUILD SOURCE CODE
 echo "Creating source ZIP..."
 (cd "$ROOT_DIR" && zip -q -r "$DIST_DIR/$SOURCE_ZIP" \
-  src/ scripts/ project-docs/ \
+  src/ scripts/ tests/ project-docs/ \
   README.md CHANGELOG.md CONTRIBUTING.md PRIVACY.md LICENSE .gitignore \
   -x "*.DS_Store" "*/__MACOSX/*" "*/.git/*" "dist/*" "temp-chrome-build/*")
 

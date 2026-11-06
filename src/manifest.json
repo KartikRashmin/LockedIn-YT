@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LockedIn - Remove YouTube Shorts & Distractions",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Stop doomscrolling. Hide YouTube Shorts, feeds, and comments. Block the algorithm and stay LockedIn on what matters.",
   "icons": {
     "48": "assets/icons/icon48.png"

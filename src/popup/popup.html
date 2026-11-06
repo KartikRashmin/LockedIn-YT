@@ -9,19 +9,25 @@
 <body>
   <div class="popup-container settings-lock-checking">
     <!-- Settings Lock Overlay (shown on popup open when the Settings Lock Timer is on) -->
-    <div class="settings-lock-overlay" id="settingsLockOverlay" role="alertdialog" aria-labelledby="settingsLockTitle" aria-describedby="settingsLockSubtitle">
+    <div class="settings-lock-overlay" id="settingsLockOverlay" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="settingsLockTitle" aria-describedby="settingsLockSubtitle">
       <div class="settings-lock-content">
-        <svg class="settings-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="4" y="11" width="16" height="10" rx="2"></rect>
-          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-        </svg>
-        <p class="settings-lock-title" id="settingsLockTitle" data-i18n-key="settingsLock.title">Settings locked</p>
-        <p class="settings-lock-countdown" id="settingsLockCountdown" aria-live="polite">0</p>
+        <h1 class="settings-lock-title" id="settingsLockTitle" data-i18n-key="settingsLock.title">Settings locked</h1>
         <p class="settings-lock-subtitle" id="settingsLockSubtitle" data-i18n-key="settingsLock.subtitle">Take a breath. Do you really need to change something?</p>
+        <div class="settings-lock-timer" id="settingsLockTimer">
+          <svg class="settings-lock-ring" viewBox="0 0 112 112" aria-hidden="true">
+            <circle class="settings-lock-track" cx="56" cy="56" r="54" pathLength="100"></circle>
+            <circle class="settings-lock-progress" id="settingsLockProgress" cx="56" cy="56" r="54" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="settings-lock-time">
+            <p class="settings-lock-countdown" id="settingsLockCountdown">0</p>
+            <p class="settings-lock-unit" data-i18n-key="settingsLock.secondsLeft">seconds left</p>
+          </div>
+        </div>
+        <p class="settings-lock-footer" id="settingsLockFooter" data-i18n-key="settingsLock.automatic">Unlocks automatically when the timer ends.</p>
       </div>
     </div>
 
-    <div class="popup-header">
+    <div inert class="popup-header">
       <button id="menuButton" class="menu-button" title="Menu" data-i18n-key="tooltip.menu" data-i18n-attr="title">
         <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -51,7 +57,7 @@
     </div>
 
     <!-- Slide-out Menu -->
-    <div class="settings-menu" id="settingsMenu">
+    <div inert class="settings-menu" id="settingsMenu">
       <div class="settings-menu-header">
         <h2 class="settings-menu-title" data-i18n-key="menu.title">MENU</h2>
         <button id="closeMenuButton" class="close-menu-button" title="Close" data-i18n-key="tooltip.close" data-i18n-attr="title">
@@ -135,7 +141,7 @@
           <div class="menu-option-row">
             <div class="menu-option-text">
               <span class="menu-option-label" data-i18n-key="menu.option.settingsLock">Settings Lock Timer</span>
-              <span class="menu-option-description" data-i18n-key="menu.option.settingsLock.desc">Make yourself wait before changing settings each time you open LockedIn.</span>
+              <span class="menu-option-description" data-i18n-key="menu.option.settingsLock.desc">Applies next time you open LockedIn. Closing the popup restarts the wait.</span>
             </div>
             <div class="menu-dropdown-container">
               <button class="menu-inline-trigger" type="button" id="settingsLockDropdownTrigger" data-menu-dropdown-trigger data-menu-dropdown-target="settingsLockDropdownPanel" aria-expanded="false">
@@ -174,7 +180,7 @@
       </div>
     </div>
 
-    <div class="settings-scroll-area" id="settingsArea">
+    <div inert class="settings-scroll-area" id="settingsArea">
       <div class="settings-container">
         <div class="settings-group" data-group="homepage">
           <div class="group-header" role="group">
@@ -503,7 +509,7 @@
       </div>
     </div>
 
-    <div class="disabled-message" id="disabledMessage">
+    <div inert class="disabled-message" id="disabledMessage">
       <div class="disabled-content">
         <div class="disabled-icon">:/</div>
         <p class="disabled-text" data-i18n-key="state.lockedinOff">LockedIn is off</p>
@@ -512,7 +518,7 @@
     </div>
 
     <!-- Sponsor Page -->
-    <div class="sponsor-page" id="sponsorPage">
+    <div inert class="sponsor-page" id="sponsorPage">
       <div class="sponsor-header">
         <h2 class="sponsor-title" data-i18n-key="sponsor.title">Support LockedIn</h2>
         <button id="closeSponsorButton" class="close-sponsor-button" title="Close" data-i18n-key="tooltip.close" data-i18n-attr="title">
@@ -584,7 +590,7 @@
       </div>
     </div>
 
-    <div class="popup-footer">
+    <div inert class="popup-footer">
       <hr class="footer-divider">
       <div class="footer-content">
         <button id="sponsorButton" class="footer-link footer-button"><span data-i18n-key="footer.sponsor">Sponsor</span><svg class="coffee-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></button>
