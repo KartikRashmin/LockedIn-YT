@@ -27,6 +27,9 @@ jobs:
         run: |
           find src -name "*.js" -print0 | xargs -0 -n1 node --check
 
+      - name: Test settings lock behavior
+        run: node --test tests/*.test.cjs
+
       - name: Make build script executable
         run: chmod +x scripts/build.sh
 
