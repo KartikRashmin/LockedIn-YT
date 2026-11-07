@@ -260,35 +260,74 @@ function createSearchWidget() {
 		pointer-events: auto;
 	`;
 
-	// YouTube logo (SVG inline — matches YouTube's actual logo)
-	const logoLink = document.createElement('a');
-	logoLink.href = '#';
-	logoLink.setAttribute('aria-label', 'Search YouTube');
-	logoLink.style.cssText = 'display: flex; align-items: center; gap: 0; text-decoration: none; cursor: default;';
-	logoLink.addEventListener('click', e => e.preventDefault());
+	// YouTube logo — cloned from the actual nav bar logo element
+	const logoContainer = document.createElement('div');
+	logoContainer.style.cssText = 'display: flex; align-items: center; pointer-events: none;';
 
-	const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 20" width="90" height="20" style="display:block;">
-		<path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
-		<path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"/>
-	</svg>`;
+	// Clone the real logo from the nav bar
+	function cloneNavLogo() {
+		// Priority order: most specific → most general selectors
+		const candidates = [
+			'#start ytd-logo',
+			'ytd-masthead #start ytd-logo',
+			'#logo ytd-logo',
+			'ytd-logo',
+			'#start a[href="/"]',
+			'#start a[aria-label*="YouTube"]',
+			'#logo-icon-container',
+			'#yt-masthead-logo',
+		];
+		for (const sel of candidates) {
+			const el = document.querySelector(sel);
+			if (!el) continue;
+			try {
+				const clone = el.cloneNode(true);
+				// Strip links and interactivity
+				clone.querySelectorAll('a').forEach(a => {
+					a.removeAttribute('href');
+					a.style.cursor = 'default';
+					a.style.pointerEvents = 'none';
+				});
+				// Make sure images/svgs inside render correctly
+				clone.querySelectorAll('[style*="display:none"], [hidden]').forEach(h => {
+					h.removeAttribute('hidden');
+				});
+				clone.style.pointerEvents = 'none';
+				return clone;
+			} catch(e) { /* try next */ }
+		}
+		return null;
+	}
 
-	const youtubeText = document.createElement('span');
-	youtubeText.style.cssText = `
-		font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
-		font-size: 20px;
-		font-weight: 500;
-		letter-spacing: -0.5px;
-		color: ${isDark ? '#ffffff' : '#030303'};
-		margin-left: 6px;
-		line-height: 1;
-		user-select: none;
-	`;
-	youtubeText.textContent = 'YouTube';
-
-	const logoIconWrapper = document.createElement('span');
-	logoIconWrapper.innerHTML = logoSvg;
-	logoLink.appendChild(logoIconWrapper);
-	logoLink.appendChild(youtubeText);
+	const navLogoClone = cloneNavLogo();
+	if (navLogoClone) {
+		// Scale the cloned nav logo up — nav logo is ~18px tall, we want ~32px (1.78×)
+		const scaleWrapper = document.createElement('div');
+		scaleWrapper.style.cssText = `
+			display: inline-flex;
+			align-items: center;
+			transform: scale(1.75);
+			transform-origin: left center;
+			pointer-events: none;
+			margin-right: calc(0.75 * 1em);
+		`;
+		scaleWrapper.appendChild(navLogoClone);
+		// Outer div handles the space the transform-scaled element would otherwise collapse
+		const logoOuter = document.createElement('div');
+		logoOuter.style.cssText = 'display: flex; align-items: center; height: 32px; min-width: 160px;';
+		logoOuter.appendChild(scaleWrapper);
+		logoContainer.appendChild(logoOuter);
+	} else {
+		// Fallback: inline SVG logo if DOM clone is unavailable
+		const fbSvg = document.createElement('div');
+		fbSvg.innerHTML = `<svg viewBox="0 0 203 46" width="203" height="46" xmlns="http://www.w3.org/2000/svg">
+			<path d="M64.14 8.19A8.08 8.08 0 0 0 58.49 2.5C53.37 1.1 32.86 1.1 32.86 1.1S12.35 1.1 7.23 2.5a8.08 8.08 0 0 0-5.65 5.69C.17 13.37.17 23 .17 23s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69c5.12 1.4 25.63 1.4 25.63 1.4s20.51 0 25.63-1.4a8.08 8.08 0 0 0 5.65-5.69C65.55 32.63 65.55 23 65.55 23s0-9.63-1.41-14.81z" fill="red"/>
+			<path d="M26.44 32.86L43.14 23 26.44 13.14v19.72z" fill="#fff"/>
+			<text x="74" y="34" font-family="'YouTube Noto',Roboto,Arial,sans-serif" font-size="30" font-weight="500" letter-spacing="-0.75" fill="${isDark ? '#fff' : '#030303'}">YouTube</text>
+		</svg>`;
+		fbSvg.style.cssText = 'display: flex; align-items: center;';
+		logoContainer.appendChild(fbSvg);
+	}
 
 	// Search form
 	const form = document.createElement('form');
@@ -438,7 +477,7 @@ function createSearchWidget() {
 	form.appendChild(searchBtn);
 	form.appendChild(voiceBtn);
 
-	panel.appendChild(logoLink);
+	panel.appendChild(logoContainer);
 	panel.appendChild(form);
 	panel.appendChild(poweredBy);
 	wrapper.appendChild(panel);
@@ -512,6 +551,9 @@ function hideFeed(shouldHide) {
 		if (placeholder) placeholder.remove();
 		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 		if (widgetStyles) widgetStyles.remove();
+		// Restore navbar search bar
+		const navHideStyle = document.getElementById('lockedin-hide-nav-search');
+		if (navHideStyle) navHideStyle.remove();
 		return;
 	}
 
@@ -535,12 +577,33 @@ function hideFeed(shouldHide) {
 			});
 		});
 
-		// If user has explicitly hidden the search widget, show nothing
+		// Hide the navbar search bar — it will live in our widget instead
+		if (!document.getElementById('lockedin-hide-nav-search')) {
+			const navSearchStyle = document.createElement('style');
+			navSearchStyle.id = 'lockedin-hide-nav-search';
+			navSearchStyle.textContent = `
+				/* Hide the search bar in the top nav — shown in our homepage widget */
+				#center.ytd-masthead,
+				#center:has(#search-form),
+				#search-container,
+				#search-form,
+				ytd-searchbox,
+				#masthead #center {
+					display: none !important;
+				}
+			`;
+			(document.head || document.documentElement).appendChild(navSearchStyle);
+		}
+
+		// If user has explicitly hidden the search widget, also restore navbar search and show nothing
 		if (latestSyncedSettings.showFeedSearchWidget === false) {
 			const existingPlaceholder = document.getElementById(placeholderId);
 			if (existingPlaceholder) existingPlaceholder.remove();
 			const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 			if (widgetStyles) widgetStyles.remove();
+			// Also restore the navbar search since we won't show our widget
+			const navHideStyle = document.getElementById('lockedin-hide-nav-search');
+			if (navHideStyle) navHideStyle.remove();
 			return;
 		}
 
@@ -548,12 +611,35 @@ function hideFeed(shouldHide) {
 			const widget = createSearchWidget();
 			document.body.appendChild(widget);
 			console.log('LockedIn: Search widget injected into body');
+
+			// If logo clone fell back (nav not ready yet), retry after nav loads
+			const logoOuter = widget.querySelector('[data-lockedin-logo-wrapper]');
+			if (!logoOuter) {
+				let retries = 0;
+				const retryLogo = setInterval(() => {
+					retries++;
+					const navLogoEl = document.querySelector('#start ytd-logo, ytd-logo, #start a[href="/"]');
+					if (navLogoEl || retries >= 10) {
+						clearInterval(retryLogo);
+						// Rebuild the widget with the now-available logo
+						const existing = document.getElementById(placeholderId);
+						if (existing && navLogoEl) {
+							existing.remove();
+							const rebuilt = createSearchWidget();
+							document.body.appendChild(rebuilt);
+						}
+					}
+				}, 300);
+			}
 		}
 	} else {
 		const placeholder = document.getElementById(placeholderId);
 		if (placeholder) placeholder.remove();
 		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 		if (widgetStyles) widgetStyles.remove();
+		// Restore navbar search when not on homepage
+		const navHideStyle = document.getElementById('lockedin-hide-nav-search');
+		if (navHideStyle) navHideStyle.remove();
 	}
 }
 
