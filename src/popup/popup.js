@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS = {
   extensionEnabled: true,
   lightMode: false,
   hideFeedQuote: false,
+  showFeedSearchWidget: true,
   takeBreak: false,
   breakDuration: 5,
   customMeme: null,
@@ -112,6 +113,8 @@ const I18N_STRINGS = {
     'power.thirty': 'Turn Off for 30 min',
     'menu.title': 'Menu',
     'menu.option.hideFeedQuote': 'Hide Motivational Quotes',
+    'menu.option.showFeedSearchWidget': 'Show Search Widget',
+    'menu.option.showFeedSearchWidget.desc': 'Show a YouTube-style search bar instead of your homepage feed when it is hidden.',
     'menu.option.appearance': 'Extension Appearance',
     'menu.option.language': 'Extension Language',
     'menu.option.hideFeedQuote.desc': 'Hide the motivational quote shown when your homepage feed is blocked.',
@@ -1865,6 +1868,11 @@ function loadSettings() {
         browser.storage.sync.set({ hideFeedQuote: settings.hideFeedImage }, () => {
           browser.storage.sync.remove('hideFeedImage');
         });
+      }
+      // Migration: if user had hideFeedQuote=true, map to showFeedSearchWidget=false
+      if (settings.hideFeedQuote === true && settings.showFeedSearchWidget === undefined) {
+        settings.showFeedSearchWidget = false;
+        browser.storage.sync.set({ showFeedSearchWidget: false });
       }
       const currentSettings = { ...DEFAULT_SETTINGS, ...settings };
       toggles.forEach((toggle) => {

@@ -8,6 +8,10 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
 				hideExploreMoreTopics(message.value);
 			} else if (message.setting === 'cleanHomepageFeed') {
 				cleanHomepageFeed(message.value);
+			} else if (message.setting === 'showFeedSearchWidget' || message.setting === 'hideFeed') {
+				// Re-render widget when toggle or widget visibility changes
+				latestSyncedSettings[message.setting] = message.value;
+				hideFeed(latestSyncedSettings.hideFeed);
 			}
 		}
 	});
@@ -224,6 +228,271 @@ function redirectToSubscriptions(shouldRedirect) {
 	}
 }
 
+// ===== YOUTUBE SEARCH WIDGET =====
+
+function createSearchWidget() {
+	const isDark = isYouTubeDarkMode();
+
+	const wrapper = document.createElement('div');
+	wrapper.id = 'lockedin-feed-placeholder';
+	wrapper.style.cssText = `
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		background: transparent;
+		pointer-events: none;
+	`;
+
+	// Inner content panel (pointer-events re-enabled)
+	const panel = document.createElement('div');
+	panel.style.cssText = `
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 24px;
+		pointer-events: auto;
+	`;
+
+	// YouTube logo (SVG inline — matches YouTube's actual logo)
+	const logoLink = document.createElement('a');
+	logoLink.href = '#';
+	logoLink.setAttribute('aria-label', 'Search YouTube');
+	logoLink.style.cssText = 'display: flex; align-items: center; gap: 0; text-decoration: none; cursor: default;';
+	logoLink.addEventListener('click', e => e.preventDefault());
+
+	const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 20" width="90" height="20" style="display:block;">
+		<path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
+		<path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"/>
+	</svg>`;
+
+	const youtubeText = document.createElement('span');
+	youtubeText.style.cssText = `
+		font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+		font-size: 20px;
+		font-weight: 500;
+		letter-spacing: -0.5px;
+		color: ${isDark ? '#ffffff' : '#030303'};
+		margin-left: 6px;
+		line-height: 1;
+		user-select: none;
+	`;
+	youtubeText.textContent = 'YouTube';
+
+	const logoIconWrapper = document.createElement('span');
+	logoIconWrapper.innerHTML = logoSvg;
+	logoLink.appendChild(logoIconWrapper);
+	logoLink.appendChild(youtubeText);
+
+	// Search form
+	const form = document.createElement('form');
+	form.style.cssText = 'display: flex; align-items: center; gap: 0; width: 540px; max-width: 90vw;';
+
+	let searchInput; // forward declaration for closure
+
+	form.addEventListener('submit', e => {
+		e.preventDefault();
+		const q = searchInput.value.trim();
+		if (q) {
+			window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+		}
+	});
+
+	const inputWrapper = document.createElement('div');
+	inputWrapper.style.cssText = `
+		flex: 1;
+		display: flex;
+		align-items: center;
+		border: 1px solid ${isDark ? '#303030' : '#d3d3d3'};
+		border-right: none;
+		border-radius: 40px 0 0 40px;
+		padding: 0 16px;
+		height: 44px;
+		background: ${isDark ? '#121212' : '#ffffff'};
+		transition: border-color 0.15s, box-shadow 0.15s;
+		box-sizing: border-box;
+	`;
+	inputWrapper.addEventListener('focusin', () => {
+		inputWrapper.style.borderColor = '#1c62b9';
+		inputWrapper.style.boxShadow = '0 0 0 1px #1c62b9 inset';
+	});
+	inputWrapper.addEventListener('focusout', () => {
+		inputWrapper.style.borderColor = isDark ? '#303030' : '#d3d3d3';
+		inputWrapper.style.boxShadow = 'none';
+	});
+
+	searchInput = document.createElement('input');
+	searchInput.type = 'text';
+	searchInput.placeholder = 'Search';
+	searchInput.setAttribute('aria-label', 'Search');
+	searchInput.style.cssText = `
+		flex: 1;
+		border: none;
+		outline: none;
+		background: transparent;
+		font-size: 16px;
+		font-family: Roboto, Arial, sans-serif;
+		color: ${isDark ? '#e8eaed' : '#030303'};
+		caret-color: ${isDark ? '#e8eaed' : '#030303'};
+		width: 100%;
+	`;
+	searchInput.setAttribute('autocomplete', 'off');
+	searchInput.setAttribute('spellcheck', 'false');
+
+	// Placeholder colour via style tag
+	const placeholderStyle = document.getElementById('lockedin-search-widget-styles') || document.createElement('style');
+	placeholderStyle.id = 'lockedin-search-widget-styles';
+	placeholderStyle.textContent = `
+		#lockedin-feed-placeholder input::placeholder {
+			color: ${isDark ? '#aaaaaa' : '#909090'};
+			opacity: 1;
+		}
+	`;
+	if (!document.getElementById('lockedin-search-widget-styles')) {
+		(document.head || document.documentElement).appendChild(placeholderStyle);
+	}
+
+	inputWrapper.appendChild(searchInput);
+
+	// Search submit button
+	const searchBtn = document.createElement('button');
+	searchBtn.type = 'submit';
+	searchBtn.setAttribute('aria-label', 'Search');
+	searchBtn.style.cssText = `
+		width: 64px;
+		height: 44px;
+		border: 1px solid ${isDark ? '#303030' : '#d3d3d3'};
+		border-left: none;
+		border-radius: 0 40px 40px 0;
+		background: ${isDark ? '#272727' : '#f8f8f8'};
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 0.15s;
+		flex-shrink: 0;
+		box-sizing: border-box;
+	`;
+	searchBtn.addEventListener('mouseover', () => {
+		searchBtn.style.background = isDark ? '#3d3d3d' : '#efefef';
+	});
+	searchBtn.addEventListener('mouseout', () => {
+		searchBtn.style.background = isDark ? '#272727' : '#f8f8f8';
+	});
+	const iconColor = isDark ? '#aaaaaa' : '#606060';
+	searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<circle cx="11" cy="11" r="8"></circle>
+		<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+	</svg>`;
+
+	// Voice search button
+	const voiceBtn = document.createElement('button');
+	voiceBtn.type = 'button';
+	voiceBtn.setAttribute('aria-label', 'Search by voice');
+	voiceBtn.title = 'Search by voice';
+	voiceBtn.style.cssText = `
+		width: 40px;
+		height: 40px;
+		border: none;
+		border-radius: 50%;
+		background: transparent;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: 8px;
+		flex-shrink: 0;
+		transition: background 0.15s;
+	`;
+	voiceBtn.addEventListener('mouseover', () => {
+		voiceBtn.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+	});
+	voiceBtn.addEventListener('mouseout', () => {
+		voiceBtn.style.background = 'transparent';
+	});
+	voiceBtn.addEventListener('click', () => {
+		startVoiceSearch(searchInput, form);
+	});
+	voiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" focusable="false">
+		<path fill="${iconColor}" d="M12 2a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v5a2 2 0 0 0 4 0V6a2 2 0 0 0-2-2zm7 7a1 1 0 0 1 1 1 8 8 0 0 1-7 7.94V21h2a1 1 0 0 1 0 2H9a1 1 0 0 1 0-2h2v-1.06A8 8 0 0 1 4 12a1 1 0 0 1 2 0 6 6 0 0 0 12 0 1 1 0 0 1 1-1z"/>
+	</svg>`;
+
+	// Powered by label
+	const poweredBy = document.createElement('div');
+	poweredBy.textContent = 'Powered by LockedIn';
+	poweredBy.style.cssText = `
+		font-family: Roboto, Arial, sans-serif;
+		font-size: 12px;
+		color: ${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
+		margin-top: 4px;
+		user-select: none;
+	`;
+
+	form.appendChild(inputWrapper);
+	form.appendChild(searchBtn);
+	form.appendChild(voiceBtn);
+
+	panel.appendChild(logoLink);
+	panel.appendChild(form);
+	panel.appendChild(poweredBy);
+	wrapper.appendChild(panel);
+
+	return wrapper;
+}
+
+function startVoiceSearch(inputEl) {
+	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+	if (!SpeechRecognition) {
+		inputEl.focus();
+		return;
+	}
+
+	const recognition = new SpeechRecognition();
+	recognition.lang = navigator.language || 'en-US';
+	recognition.interimResults = false;
+	recognition.maxAlternatives = 1;
+
+	const originalPlaceholder = inputEl.placeholder;
+	inputEl.placeholder = 'Listening\u2026';
+	inputEl.disabled = true;
+
+	recognition.onresult = (event) => {
+		const transcript = event.results[0][0].transcript;
+		inputEl.value = transcript;
+		inputEl.disabled = false;
+		inputEl.placeholder = originalPlaceholder;
+		if (transcript.trim()) {
+			window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(transcript.trim())}`;
+		}
+	};
+
+	recognition.onerror = () => {
+		inputEl.disabled = false;
+		inputEl.placeholder = originalPlaceholder;
+		inputEl.focus();
+	};
+
+	recognition.onend = () => {
+		if (inputEl.disabled) {
+			inputEl.disabled = false;
+			inputEl.placeholder = originalPlaceholder;
+		}
+	};
+
+	try {
+		recognition.start();
+	} catch (err) {
+		inputEl.disabled = false;
+		inputEl.placeholder = originalPlaceholder;
+	}
+}
+
 function hideFeed(shouldHide) {
 	const placeholderId = 'lockedin-feed-placeholder';
 
@@ -240,9 +509,9 @@ function hideFeed(shouldHide) {
 		});
 
 		const placeholder = document.getElementById(placeholderId);
-		if (placeholder) {
-			placeholder.remove();
-		}
+		if (placeholder) placeholder.remove();
+		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
+		if (widgetStyles) widgetStyles.remove();
 		return;
 	}
 
@@ -266,60 +535,25 @@ function hideFeed(shouldHide) {
 			});
 		});
 
-		const hideQuotes = latestSyncedSettings.hideFeedQuote || latestSyncedSettings.hideFeedImage;
-		if (hideQuotes) {
+		// If user has explicitly hidden the search widget, show nothing
+		if (latestSyncedSettings.showFeedSearchWidget === false) {
 			const existingPlaceholder = document.getElementById(placeholderId);
 			if (existingPlaceholder) existingPlaceholder.remove();
+			const widgetStyles = document.getElementById('lockedin-search-widget-styles');
+			if (widgetStyles) widgetStyles.remove();
 			return;
 		}
 
 		if (!document.getElementById(placeholderId)) {
-			const placeholder = document.createElement('div');
-			placeholder.id = placeholderId;
-			placeholder.style.cssText = `
-					position: absolute;
-					top: 200px;
-					left: 50%;
-					transform: translateX(-50%);
-					text-align: center;
-					z-index: 1;
-					pointer-events: none;
-				`;
-
-			const quote = getRandomQuote();
-			const isDark = isYouTubeDarkMode();
-			const textColor = isDark ? '#ffffff' : '#2b2b2b';
-			const authorColor = isDark ? 'rgba(255, 255, 255, 0.75)' : 'rgba(0, 0, 0, 0.6)';
-
-			const quoteCard = document.createElement('div');
-			quoteCard.style.cssText = `
-				max-width: 420px;
-				padding: 6px 10px;
-				background: transparent;
-				color: ${textColor};
-				font-family: Roboto, Arial, sans-serif;
-			`;
-
-			const quoteText = document.createElement('div');
-			quoteText.textContent = `“${quote.text}”`;
-			quoteText.style.cssText = 'font-size: 18px; line-height: 1.55; font-weight: 600;';
-
-			const quoteAuthor = document.createElement('div');
-			quoteAuthor.textContent = `— ${quote.author}`;
-			quoteAuthor.style.cssText = `margin-top: 12px; font-size: 13px; color: ${authorColor}; text-align: right;`;
-
-			quoteCard.appendChild(quoteText);
-			quoteCard.appendChild(quoteAuthor);
-			placeholder.appendChild(quoteCard);
-
-			document.body.appendChild(placeholder);
-			console.log('LockedIn: Quote placeholder injected into body');
+			const widget = createSearchWidget();
+			document.body.appendChild(widget);
+			console.log('LockedIn: Search widget injected into body');
 		}
 	} else {
 		const placeholder = document.getElementById(placeholderId);
-		if (placeholder) {
-			placeholder.remove();
-		}
+		if (placeholder) placeholder.remove();
+		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
+		if (widgetStyles) widgetStyles.remove();
 	}
 }
 

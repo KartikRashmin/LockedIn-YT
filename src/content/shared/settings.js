@@ -128,6 +128,7 @@ const DEFAULT_SETTINGS = {
 	hidePlaylists: false,
 	hideSubscriptions: false,
 	hideFeedQuote: false,
+	showFeedSearchWidget: true,
 	extensionEnabled: true
 };
 
