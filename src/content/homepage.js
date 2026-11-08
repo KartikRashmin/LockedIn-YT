@@ -252,8 +252,6 @@ const SEARCH_WIDGET_STYLE_ID = 'lockedin-search-widget-styles';
 let _navListenerAttached = false;
 let currentSuggestAbort = null;
 let suggestDebounceTimer = null;
-let currentOutsideClickListener = null;
-let currentSlashListener = null;
 
 function removeSearchWidgetCSS() {
 	const style = document.getElementById(SEARCH_WIDGET_STYLE_ID);
@@ -565,14 +563,6 @@ function removeSearchWidget() {
 		currentSuggestAbort.abort();
 		currentSuggestAbort = null;
 	}
-	if (currentOutsideClickListener) {
-		document.removeEventListener('click', currentOutsideClickListener);
-		currentOutsideClickListener = null;
-	}
-	if (currentSlashListener) {
-		window.removeEventListener('keydown', currentSlashListener, true);
-		currentSlashListener = null;
-	}
 }
 
 async function fetchYouTubeSuggestions(query) {
@@ -704,6 +694,7 @@ function buildSearchWidget() {
 	searchInput.type = 'text';
 	searchInput.className = 'lockedin-search-input';
 	searchInput.placeholder = 'Search';
+	searchInput.title = 'Search (Alt + K)';
 	searchInput.setAttribute('aria-label', 'Search');
 	searchInput.setAttribute('autocomplete', 'off');
 	searchInput.setAttribute('spellcheck', 'false');
@@ -878,33 +869,12 @@ function buildSearchWidget() {
 	});
 
 	// Close suggestions on outside click
-	if (currentOutsideClickListener) {
-		document.removeEventListener('click', currentOutsideClickListener);
-	}
-	currentOutsideClickListener = (e) => {
+	const outsideClickListener = (e) => {
 		if (!form.contains(e.target)) {
 			closeSuggestions();
 		}
 	};
-	document.addEventListener('click', currentOutsideClickListener);
-
-	// Pressing '/' or 'Ctrl+K' / 'Cmd+K' focuses search input (YouTube's native search key)
-	if (currentSlashListener) {
-		window.removeEventListener('keydown', currentSlashListener, true);
-	}
-	currentSlashListener = (e) => {
-		const tag = e.target?.tagName;
-		if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
-		if (e.key === '/' || e.key === 'Slash' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
-			if (document.getElementById(SEARCH_WIDGET_ID)) {
-				e.preventDefault();
-				e.stopPropagation();
-				searchInput.focus();
-				searchInput.select();
-			}
-		}
-	};
-	window.addEventListener('keydown', currentSlashListener, true);
+	document.addEventListener('click', outsideClickListener);
 
 	// Voice search
 	voiceBtn.addEventListener('click', () => {
@@ -1044,6 +1014,26 @@ function ensureNavTeardownListener() {
 	window.addEventListener('popstate', onNavFinish, true);
 }
 
+let _shortcutListenerAttached = false;
+function ensureSearchShortcutListener() {
+	if (_shortcutListenerAttached) return;
+	_shortcutListenerAttached = true;
+
+	window.addEventListener('keydown', (e) => {
+		// Alt + K shortcut (Option + K on macOS)
+		if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) {
+			if (!isHomePath()) return;
+			const input = document.querySelector(`#${SEARCH_WIDGET_ID} .lockedin-search-input`);
+			if (input) {
+				e.preventDefault();
+				e.stopPropagation();
+				input.focus();
+				input.select();
+			}
+		}
+	}, true);
+}
+
 function hideFeed(shouldHide) {
 	if (!shouldHide) {
 		// Restore feed elements
@@ -1085,6 +1075,7 @@ function hideFeed(shouldHide) {
 
 		// Attach navigation listeners to tear down when leaving homepage
 		ensureNavTeardownListener();
+		ensureSearchShortcutListener();
 
 		// If user disabled the search widget, leave page blank
 		if (latestSyncedSettings.showFeedSearchWidget === false) {
