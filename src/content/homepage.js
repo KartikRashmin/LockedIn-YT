@@ -697,6 +697,8 @@ function buildSearchWidget() {
 	searchInput.setAttribute('aria-label', 'Search');
 	searchInput.setAttribute('autocomplete', 'off');
 	searchInput.setAttribute('spellcheck', 'false');
+	searchInput.autofocus = true;
+	searchInput.setAttribute('autofocus', '');
 
 	const clearBtn = document.createElement('button');
 	clearBtn.type = 'button';
@@ -940,32 +942,49 @@ function buildSearchWidget() {
 	return widget;
 }
 
+function focusSearchWidgetInput() {
+	function tryFocus() {
+		const input = document.querySelector(`#${SEARCH_WIDGET_ID} .lockedin-search-input`);
+		if (input && document.activeElement !== input) {
+			input.focus();
+			return true;
+		}
+		return false;
+	}
+
+	tryFocus();
+	requestAnimationFrame(() => {
+		tryFocus();
+		setTimeout(tryFocus, 100);
+		setTimeout(tryFocus, 350);
+	});
+}
+
 function insertSearchWidgetIntoDOM(widget) {
 	const primary = document.querySelector('ytd-browse[page-subtype="home"] #primary');
 	if (primary) {
 		primary.prepend(widget);
-		return;
+	} else {
+		const browseHome = document.querySelector('ytd-browse[page-subtype="home"]');
+		if (browseHome) {
+			browseHome.prepend(widget);
+		} else {
+			const ytmBrowse = document.querySelector('ytm-browse');
+			if (ytmBrowse) {
+				ytmBrowse.prepend(widget);
+			} else {
+				const pageManager = document.querySelector('ytd-page-manager');
+				if (pageManager) {
+					pageManager.prepend(widget);
+				} else {
+					document.body.prepend(widget);
+				}
+			}
+		}
 	}
 
-	const browseHome = document.querySelector('ytd-browse[page-subtype="home"]');
-	if (browseHome) {
-		browseHome.prepend(widget);
-		return;
-	}
-
-	const ytmBrowse = document.querySelector('ytm-browse');
-	if (ytmBrowse) {
-		ytmBrowse.prepend(widget);
-		return;
-	}
-
-	const pageManager = document.querySelector('ytd-page-manager');
-	if (pageManager) {
-		pageManager.prepend(widget);
-		return;
-	}
-
-	document.body.prepend(widget);
+	// Autofocus search input on load just like Google homepage
+	focusSearchWidgetInput();
 }
 
 function ensureNavTeardownListener() {
@@ -985,6 +1004,7 @@ function ensureNavTeardownListener() {
 			removeSearchWidgetCSS();
 		} else if (latestSyncedSettings.hideFeed) {
 			hideFeed(true);
+			focusSearchWidgetInput();
 		}
 	}
 
