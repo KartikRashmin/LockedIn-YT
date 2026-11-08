@@ -37,7 +37,6 @@ const DEFAULT_SETTINGS = {
   hideSubscriptions: false,
   extensionEnabled: true,
   lightMode: false,
-  hideFeedQuote: false,
   showFeedSearchWidget: true,
   takeBreak: false,
   breakDuration: 5,
@@ -112,12 +111,10 @@ const I18N_STRINGS = {
     'power.twenty': 'Turn Off for 20 min',
     'power.thirty': 'Turn Off for 30 min',
     'menu.title': 'Menu',
-    'menu.option.hideFeedQuote': 'Hide Motivational Quotes',
     'menu.option.showFeedSearchWidget': 'Show Search Widget',
     'menu.option.showFeedSearchWidget.desc': 'Show a Google-style search bar instead of your homepage feed when it is hidden.',
     'menu.option.appearance': 'Extension Appearance',
     'menu.option.language': 'Extension Language',
-    'menu.option.hideFeedQuote.desc': 'Hide the motivational quote shown when your homepage feed is blocked.',
     'menu.option.appearance.desc': 'Choose Auto, Light, or Dark theme for the extension popup.',
     'menu.option.language.desc': 'Set popup language manually, or keep Auto to follow browser language.',
     'appearance.option.auto': 'Auto',
@@ -216,12 +213,10 @@ const I18N_STRINGS = {
     'power.twenty': 'Desactivar por 20 min',
     'power.thirty': 'Desactivar por 30 min',
     'menu.title': 'Menú',
-    'menu.option.hideFeedQuote': 'Ocultar citas motivacionales',
     'menu.option.showFeedSearchWidget': 'Mostrar barra de búsqueda',
     'menu.option.showFeedSearchWidget.desc': 'Muestra una barra de búsqueda al estilo Google en lugar del feed de inicio cuando está oculto.',
     'menu.option.appearance': 'Apariencia de la extensión',
     'menu.option.language': 'Idioma de la extensión',
-    'menu.option.hideFeedQuote.desc': 'Oculta la cita motivacional cuando el feed de inicio está bloqueado.',
     'menu.option.appearance.desc': 'Elige tema Automático, Claro u Oscuro para el popup.',
     'menu.option.language.desc': 'Define el idioma del popup o usa Automático según tu navegador.',
     'appearance.option.auto': 'Automático',
@@ -317,12 +312,10 @@ const I18N_STRINGS = {
     'power.twenty': '20 मिनट के लिए बंद करें',
     'power.thirty': '30 मिनट के लिए बंद करें',
     'menu.title': 'मेन्यू',
-    'menu.option.hideFeedQuote': 'प्रेरणादायक उद्धरण छुपाएँ',
     'menu.option.showFeedSearchWidget': 'सर्च विजेट दिखाएँ',
     'menu.option.showFeedSearchWidget.desc': 'होमपेज फ़ीड छिपे होने पर Google-शैली का सर्च बार दिखाएँ।',
     'menu.option.appearance': 'एक्सटेंशन की रूपरेखा',
     'menu.option.language': 'एक्सटेंशन की भाषा',
-    'menu.option.hideFeedQuote.desc': 'फ़ीड ब्लॉक होने पर दिखने वाले प्रेरक उद्धरण को छुपाएँ।',
     'menu.option.appearance.desc': 'पॉपअप के लिए Auto, Light या Dark थीम चुनें।',
     'menu.option.language.desc': 'पॉपअप भाषा सेट करें, या Auto रखकर ब्राउज़र भाषा अपनाएँ।',
     'appearance.option.auto': 'स्वचालित',
@@ -418,12 +411,10 @@ const I18N_STRINGS = {
     'power.twenty': 'Ativar por 20 min',
     'power.thirty': 'Ativar por 30 min',
     'menu.title': 'Menu',
-    'menu.option.hideFeedQuote': 'Ocultar citações motivacionais',
     'menu.option.showFeedSearchWidget': 'Mostrar barra de pesquisa',
     'menu.option.showFeedSearchWidget.desc': 'Mostra uma barra de pesquisa no estilo Google em vez do feed inicial quando ele estiver oculto.',
     'menu.option.appearance': 'Aparência da extensão',
     'menu.option.language': 'Idioma da extensão',
-    'menu.option.hideFeedQuote.desc': 'Oculta a citação motivacional quando o feed inicial está bloqueado.',
     'menu.option.appearance.desc': 'Escolha o tema Automático, Claro ou Escuro para o popup.',
     'menu.option.language.desc': 'Defina o idioma do popup ou use Automático para seguir o navegador.',
     'appearance.option.auto': 'Automático',
@@ -519,12 +510,10 @@ const I18N_STRINGS = {
     'power.twenty': 'Désactiver pendant 20 min',
     'power.thirty': 'Désactiver pendant 30 min',
     'menu.title': 'Menu',
-    'menu.option.hideFeedQuote': 'Masquer les citations motivantes',
     'menu.option.showFeedSearchWidget': 'Afficher la barre de recherche',
     'menu.option.showFeedSearchWidget.desc': 'Affiche une barre de recherche style Google à la place du fil d’accueil lorsqu’il est masqué.',
     'menu.option.appearance': "Apparence de l’extension",
     'menu.option.language': "Langue de l’extension",
-    'menu.option.hideFeedQuote.desc': 'Masque la citation motivante lorsque le fil d’accueil est bloqué.',
     'menu.option.appearance.desc': 'Choisissez le thème Auto, Clair ou Sombre pour le popup.',
     'menu.option.language.desc': 'Définissez la langue du popup ou gardez Auto selon le navigateur.',
     'appearance.option.auto': 'Automatique',
@@ -620,12 +609,10 @@ const I18N_STRINGS = {
     'power.twenty': 'Für 20 Min deaktivieren',
     'power.thirty': 'Für 30 Min deaktivieren',
     'menu.title': 'Menü',
-    'menu.option.hideFeedQuote': 'Motivationszitate ausblenden',
     'menu.option.showFeedSearchWidget': 'Suchleiste anzeigen',
     'menu.option.showFeedSearchWidget.desc': 'Zeigt eine Suchleiste im Google-Stil anstelle des Startseiten-Feeds an, wenn dieser ausgeblendet ist.',
     'menu.option.appearance': 'Aussehen der Erweiterung',
     'menu.option.language': 'Sprache der Erweiterung',
-    'menu.option.hideFeedQuote.desc': 'Blendet das Motivationszitat aus, wenn der Startseiten-Feed blockiert ist.',
     'menu.option.appearance.desc': 'Wähle Auto-, Hell- oder Dunkel-Design für das Popup.',
     'menu.option.language.desc': 'Lege die Popup-Sprache fest oder nutze Auto für die Browser-Sprache.',
     'appearance.option.auto': 'Automatisch',
@@ -721,12 +708,10 @@ const I18N_STRINGS = {
     'power.twenty': '关闭20分钟',
     'power.thirty': '关闭30分钟',
     'menu.title': '菜单',
-    'menu.option.hideFeedQuote': '隐藏励志语录',
     'menu.option.showFeedSearchWidget': '显示搜索栏',
     'menu.option.showFeedSearchWidget.desc': '在首页推荐被隐藏时显示 Google 风格的搜索栏。',
     'menu.option.appearance': '扩展外观',
     'menu.option.language': '扩展语言',
-    'menu.option.hideFeedQuote.desc': '在首页信息流被屏蔽时隐藏显示的励志语录。',
     'menu.option.appearance.desc': '为扩展弹窗选择自动、浅色或深色主题。',
     'menu.option.language.desc': '手动设置弹窗语言，或保持自动以跟随浏览器语言。',
     'appearance.option.auto': '自动',
@@ -824,12 +809,10 @@ const I18N_STRINGS = {
     'power.twenty': '關閉20分鐘',
     'power.thirty': '關閉30分鐘',
     'menu.title': '菜單',
-    'menu.option.hideFeedQuote': '隱藏勵志語錄',
     'menu.option.showFeedSearchWidget': '顯示搜尋欄',
     'menu.option.showFeedSearchWidget.desc': '在首頁推薦被隱藏時顯示 Google 風格的搜尋欄。',
     'menu.option.appearance': '擴展外觀',
     'menu.option.language': '擴展語言',
-    'menu.option.hideFeedQuote.desc': '在首頁信息流被屏蔽時隱藏顯示的勵志語錄。',
     'menu.option.appearance.desc': '爲擴展彈窗選擇自動、淺色或深色主題。',
     'menu.option.language.desc': '手動設置彈窗語言，或保持自動以跟隨瀏覽器語言。',
     'appearance.option.auto': '自動',
@@ -1885,14 +1868,8 @@ function loadSettings() {
   return new Promise((resolve) => {
     const toggles = document.querySelectorAll('input[type="checkbox"]');
     browser.storage.sync.get(null, (settings) => {
-      if (settings.hideFeedImage !== undefined && settings.hideFeedQuote === undefined) {
-        settings.hideFeedQuote = settings.hideFeedImage;
-        browser.storage.sync.set({ hideFeedQuote: settings.hideFeedImage }, () => {
-          browser.storage.sync.remove('hideFeedImage');
-        });
-      }
-      // Migration: if user had hideFeedQuote=true, map to showFeedSearchWidget=false
-      if (settings.hideFeedQuote === true && settings.showFeedSearchWidget === undefined) {
+      // Migration: if user previously had quotes disabled, map to showFeedSearchWidget=false
+      if ((settings.hideFeedQuote === true || settings.hideFeedImage === true) && settings.showFeedSearchWidget === undefined) {
         settings.showFeedSearchWidget = false;
         browser.storage.sync.set({ showFeedSearchWidget: false });
       }

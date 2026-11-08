@@ -1,3 +1,7 @@
+## [1.2.4] - 2026-11-09
+### Added
+- Added an optional Google-style search widget on the homepage when the feed is hidden, replacing the previous motivational quotes.
+
 ## [1.2.3] - 2026-11-06
 ### Added
 - Added an optional Settings Lock Timer with waits from 5 seconds to 5 minutes before settings can be changed. Each popup opening starts a fresh wait, and settings unlock automatically when it ends.
