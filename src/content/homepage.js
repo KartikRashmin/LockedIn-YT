@@ -228,11 +228,135 @@ function redirectToSubscriptions(shouldRedirect) {
 	}
 }
 
-// ===== YOUTUBE SEARCH WIDGET =====
+// ===== YOUTUBE SEARCH WIDGET (RELOCATION MODE) =====
+//
+// Instead of cloning the search bar, we physically MOVE the real
+// #center element (YouTube's search section) out of the masthead and
+// into a centered overlay. When the feed is re-shown we move it back.
 
+// Module-level storage for relocated element references
+const _lockedinRelocation = {
+	el: null,          // the actual #center DOM node
+	parent: null,      // its original parent
+	nextSib: null,     // its original next-sibling (for exact re-insertion)
+	origStyle: '',     // its original inline style attribute value
+	retryTimer: null,  // interval id for retry if nav wasn't ready
+};
+
+// Selectors that identify the masthead search section
+const NAV_SEARCH_SELECTORS = [
+	'ytd-masthead #center',
+	'#masthead-container #center',
+	'#masthead #center',
+	'#center.ytd-masthead',
+];
+
+// Selectors for the logo in the top-left of the nav
+const NAV_LOGO_SELECTORS = [
+	'#start ytd-logo',
+	'ytd-masthead #start ytd-logo',
+	'ytd-logo',
+	'#start a[href="/"]',
+	'#logo-icon-container',
+];
+
+function findNavSearchEl() {
+	for (const sel of NAV_SEARCH_SELECTORS) {
+		const el = document.querySelector(sel);
+		if (el) return el;
+	}
+	return null;
+}
+
+// Move the real #center search element into targetContainer.
+// Returns true if successful, false if the element wasn't found yet.
+function relocateNavSearch(targetContainer) {
+	if (_lockedinRelocation.el) return true; // already relocated
+
+	const center = findNavSearchEl();
+	if (!center) return false;
+
+	// Store original position
+	_lockedinRelocation.el = center;
+	_lockedinRelocation.parent = center.parentNode;
+	_lockedinRelocation.nextSib = center.nextSibling;
+	_lockedinRelocation.origStyle = center.getAttribute('style') || '';
+
+	// Strip masthead-context flex constraints so the element
+	// renders as a standalone block inside our centered panel.
+	center.style.setProperty('position', 'static', 'important');
+	center.style.setProperty('display', 'flex', 'important');
+	center.style.setProperty('flex', 'none', 'important');
+	center.style.setProperty('min-width', '0', 'important');
+	center.style.setProperty('max-width', '100%', 'important');
+	center.style.setProperty('width', '100%', 'important');
+	center.style.setProperty('margin', '0', 'important');
+	center.style.setProperty('padding', '0', 'important');
+	center.style.setProperty('align-items', 'center', 'important');
+
+	targetContainer.appendChild(center);
+	return true;
+}
+
+// Put the #center element back exactly where it was in the masthead.
+function restoreNavSearch() {
+	const ref = _lockedinRelocation;
+	if (!ref.el || !ref.parent) return;
+
+	// Clear the retry timer if it's still running
+	if (ref.retryTimer) {
+		clearInterval(ref.retryTimer);
+		ref.retryTimer = null;
+	}
+
+	// Restore original inline style
+	if (ref.origStyle) {
+		ref.el.setAttribute('style', ref.origStyle);
+	} else {
+		ref.el.removeAttribute('style');
+	}
+
+	// Re-insert at original position
+	if (ref.nextSib && ref.nextSib.parentNode === ref.parent) {
+		ref.parent.insertBefore(ref.el, ref.nextSib);
+	} else {
+		ref.parent.appendChild(ref.el);
+	}
+
+	// Clear stored references
+	ref.el = null;
+	ref.parent = null;
+	ref.nextSib = null;
+	ref.origStyle = '';
+}
+
+// Clone the logo from the nav bar (we clone, not move, so the nav
+// still has its logo while the feed-hidden page is showing).
+function cloneNavLogo() {
+	for (const sel of NAV_LOGO_SELECTORS) {
+		const el = document.querySelector(sel);
+		if (!el) continue;
+		try {
+			const clone = el.cloneNode(true);
+			// Strip links / interactivity from clone
+			clone.querySelectorAll('a').forEach(a => {
+				a.removeAttribute('href');
+				a.style.cursor = 'default';
+				a.style.pointerEvents = 'none';
+			});
+			clone.style.pointerEvents = 'none';
+			return clone;
+		} catch (e) { /* try next */ }
+	}
+	return null;
+}
+
+// Build the centered overlay. The search slot inside it will be
+// populated separately by relocateNavSearch().
 function createSearchWidget() {
 	const isDark = isYouTubeDarkMode();
 
+	// Full-screen transparent overlay
 	const wrapper = document.createElement('div');
 	wrapper.id = 'lockedin-feed-placeholder';
 	wrapper.style.cssText = `
@@ -250,292 +374,124 @@ function createSearchWidget() {
 		pointer-events: none;
 	`;
 
-	// Inner content panel (pointer-events re-enabled)
+	// Inner content panel
 	const panel = document.createElement('div');
 	panel.style.cssText = `
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 24px;
+		gap: 20px;
 		pointer-events: auto;
+		width: min(600px, 90vw);
 	`;
 
-	// YouTube logo — cloned from the actual nav bar logo element
+	// --- Logo ---
 	const logoContainer = document.createElement('div');
 	logoContainer.style.cssText = 'display: flex; align-items: center; pointer-events: none;';
 
-	// Clone the real logo from the nav bar
-	function cloneNavLogo() {
-		// Priority order: most specific → most general selectors
-		const candidates = [
-			'#start ytd-logo',
-			'ytd-masthead #start ytd-logo',
-			'#logo ytd-logo',
-			'ytd-logo',
-			'#start a[href="/"]',
-			'#start a[aria-label*="YouTube"]',
-			'#logo-icon-container',
-			'#yt-masthead-logo',
-		];
-		for (const sel of candidates) {
-			const el = document.querySelector(sel);
-			if (!el) continue;
-			try {
-				const clone = el.cloneNode(true);
-				// Strip links and interactivity
-				clone.querySelectorAll('a').forEach(a => {
-					a.removeAttribute('href');
-					a.style.cursor = 'default';
-					a.style.pointerEvents = 'none';
-				});
-				// Make sure images/svgs inside render correctly
-				clone.querySelectorAll('[style*="display:none"], [hidden]').forEach(h => {
-					h.removeAttribute('hidden');
-				});
-				clone.style.pointerEvents = 'none';
-				return clone;
-			} catch(e) { /* try next */ }
-		}
-		return null;
-	}
-
-	const navLogoClone = cloneNavLogo();
-	if (navLogoClone) {
-		// Scale the cloned nav logo up — nav logo is ~18px tall, we want ~32px (1.78×)
-		const scaleWrapper = document.createElement('div');
-		scaleWrapper.style.cssText = `
-			display: inline-flex;
-			align-items: center;
-			transform: scale(1.75);
+	const logoClone = cloneNavLogo();
+	if (logoClone) {
+		// Scale the nav logo up to ~2× — it's about 18-20px tall in the nav,
+		// we want it at ~36-40px for the Google-search-page look.
+		const scaleWrap = document.createElement('div');
+		scaleWrap.style.cssText = `
+			transform: scale(2);
 			transform-origin: left center;
 			pointer-events: none;
-			margin-right: calc(0.75 * 1em);
 		`;
-		scaleWrapper.appendChild(navLogoClone);
-		// Outer div handles the space the transform-scaled element would otherwise collapse
+		scaleWrap.appendChild(logoClone);
+
+		// Outer box reserves space for the scaled element
 		const logoOuter = document.createElement('div');
-		logoOuter.style.cssText = 'display: flex; align-items: center; height: 32px; min-width: 160px;';
-		logoOuter.appendChild(scaleWrapper);
+		logoOuter.style.cssText = `
+			display: flex;
+			align-items: center;
+			height: 40px;
+			min-width: 180px;
+			overflow: visible;
+		`;
+		logoOuter.appendChild(scaleWrap);
 		logoContainer.appendChild(logoOuter);
 	} else {
-		// Fallback: inline SVG logo if DOM clone is unavailable
-		const fbSvg = document.createElement('div');
-		fbSvg.innerHTML = `<svg viewBox="0 0 203 46" width="203" height="46" xmlns="http://www.w3.org/2000/svg">
-			<path d="M64.14 8.19A8.08 8.08 0 0 0 58.49 2.5C53.37 1.1 32.86 1.1 32.86 1.1S12.35 1.1 7.23 2.5a8.08 8.08 0 0 0-5.65 5.69C.17 13.37.17 23 .17 23s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69c5.12 1.4 25.63 1.4 25.63 1.4s20.51 0 25.63-1.4a8.08 8.08 0 0 0 5.65-5.69C65.55 32.63 65.55 23 65.55 23s0-9.63-1.41-14.81z" fill="red"/>
-			<path d="M26.44 32.86L43.14 23 26.44 13.14v19.72z" fill="#fff"/>
-			<text x="74" y="34" font-family="'YouTube Noto',Roboto,Arial,sans-serif" font-size="30" font-weight="500" letter-spacing="-0.75" fill="${isDark ? '#fff' : '#030303'}">YouTube</text>
-		</svg>`;
-		fbSvg.style.cssText = 'display: flex; align-items: center;';
-		logoContainer.appendChild(fbSvg);
+		// Fallback inline SVG (play button + wordmark)
+		logoContainer.innerHTML = `
+			<svg viewBox="0 0 203 46" width="203" height="46"
+			     xmlns="http://www.w3.org/2000/svg" aria-label="YouTube">
+				<path d="M64.14 8.19A8.08 8.08 0 0 0 58.49 2.5C53.37 1.1 32.86 1.1 32.86 1.1
+				         S12.35 1.1 7.23 2.5a8.08 8.08 0 0 0-5.65 5.69C.17 13.37.17 23 .17 23
+				         s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69c5.12 1.4 25.63 1.4 25.63 1.4
+				         s20.51 0 25.63-1.4a8.08 8.08 0 0 0 5.65-5.69
+				         C65.55 32.63 65.55 23 65.55 23s0-9.63-1.41-14.81z" fill="#FF0000"/>
+				<path d="M26.44 32.86L43.14 23 26.44 13.14v19.72z" fill="#fff"/>
+				<text x="74" y="34"
+				      font-family="'YouTube Noto',Roboto,Arial,sans-serif"
+				      font-size="30" font-weight="500" letter-spacing="-0.75"
+				      fill="${isDark ? '#fff' : '#030303'}">YouTube</text>
+			</svg>`;
 	}
 
-	// Search form
-	const form = document.createElement('form');
-	form.style.cssText = 'display: flex; align-items: center; gap: 0; width: 540px; max-width: 90vw;';
-
-	let searchInput; // forward declaration for closure
-
-	form.addEventListener('submit', e => {
-		e.preventDefault();
-		const q = searchInput.value.trim();
-		if (q) {
-			window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-		}
-	});
-
-	const inputWrapper = document.createElement('div');
-	inputWrapper.style.cssText = `
-		flex: 1;
-		display: flex;
-		align-items: center;
-		border: 1px solid ${isDark ? '#303030' : '#d3d3d3'};
-		border-right: none;
-		border-radius: 40px 0 0 40px;
-		padding: 0 16px;
-		height: 44px;
-		background: ${isDark ? '#121212' : '#ffffff'};
-		transition: border-color 0.15s, box-shadow 0.15s;
-		box-sizing: border-box;
-	`;
-	inputWrapper.addEventListener('focusin', () => {
-		inputWrapper.style.borderColor = '#1c62b9';
-		inputWrapper.style.boxShadow = '0 0 0 1px #1c62b9 inset';
-	});
-	inputWrapper.addEventListener('focusout', () => {
-		inputWrapper.style.borderColor = isDark ? '#303030' : '#d3d3d3';
-		inputWrapper.style.boxShadow = 'none';
-	});
-
-	searchInput = document.createElement('input');
-	searchInput.type = 'text';
-	searchInput.placeholder = 'Search';
-	searchInput.setAttribute('aria-label', 'Search');
-	searchInput.style.cssText = `
-		flex: 1;
-		border: none;
-		outline: none;
-		background: transparent;
-		font-size: 16px;
-		font-family: Roboto, Arial, sans-serif;
-		color: ${isDark ? '#e8eaed' : '#030303'};
-		caret-color: ${isDark ? '#e8eaed' : '#030303'};
+	// --- Search slot: the real #center will be moved here ---
+	const searchSlot = document.createElement('div');
+	searchSlot.id = 'lockedin-search-slot';
+	searchSlot.style.cssText = `
 		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	`;
-	searchInput.setAttribute('autocomplete', 'off');
-	searchInput.setAttribute('spellcheck', 'false');
 
-	// Placeholder colour via style tag
-	const placeholderStyle = document.getElementById('lockedin-search-widget-styles') || document.createElement('style');
-	placeholderStyle.id = 'lockedin-search-widget-styles';
-	placeholderStyle.textContent = `
-		#lockedin-feed-placeholder input::placeholder {
-			color: ${isDark ? '#aaaaaa' : '#909090'};
-			opacity: 1;
+	// --- CSS to fix #center appearance outside the masthead context ---
+	let widgetStyle = document.getElementById('lockedin-search-widget-styles');
+	if (!widgetStyle) {
+		widgetStyle = document.createElement('style');
+		widgetStyle.id = 'lockedin-search-widget-styles';
+		(document.head || document.documentElement).appendChild(widgetStyle);
+	}
+	widgetStyle.textContent = `
+		/* Make the relocated #center fill its new slot naturally */
+		#lockedin-search-slot #center,
+		#lockedin-search-slot #center.ytd-masthead {
+			width: 100% !important;
+			max-width: 100% !important;
+			min-width: 0 !important;
+			flex: 1 1 auto !important;
+			display: flex !important;
+			align-items: center !important;
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+		/* Make sure the searchbox inside fills width */
+		#lockedin-search-slot ytd-searchbox,
+		#lockedin-search-slot #search-container,
+		#lockedin-search-slot #search-form {
+			width: 100% !important;
+			max-width: 100% !important;
 		}
 	`;
-	if (!document.getElementById('lockedin-search-widget-styles')) {
-		(document.head || document.documentElement).appendChild(placeholderStyle);
-	}
 
-	inputWrapper.appendChild(searchInput);
-
-	// Search submit button
-	const searchBtn = document.createElement('button');
-	searchBtn.type = 'submit';
-	searchBtn.setAttribute('aria-label', 'Search');
-	searchBtn.style.cssText = `
-		width: 64px;
-		height: 44px;
-		border: 1px solid ${isDark ? '#303030' : '#d3d3d3'};
-		border-left: none;
-		border-radius: 0 40px 40px 0;
-		background: ${isDark ? '#272727' : '#f8f8f8'};
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background 0.15s;
-		flex-shrink: 0;
-		box-sizing: border-box;
-	`;
-	searchBtn.addEventListener('mouseover', () => {
-		searchBtn.style.background = isDark ? '#3d3d3d' : '#efefef';
-	});
-	searchBtn.addEventListener('mouseout', () => {
-		searchBtn.style.background = isDark ? '#272727' : '#f8f8f8';
-	});
-	const iconColor = isDark ? '#aaaaaa' : '#606060';
-	searchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-		<circle cx="11" cy="11" r="8"></circle>
-		<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-	</svg>`;
-
-	// Voice search button
-	const voiceBtn = document.createElement('button');
-	voiceBtn.type = 'button';
-	voiceBtn.setAttribute('aria-label', 'Search by voice');
-	voiceBtn.title = 'Search by voice';
-	voiceBtn.style.cssText = `
-		width: 40px;
-		height: 40px;
-		border: none;
-		border-radius: 50%;
-		background: transparent;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-left: 8px;
-		flex-shrink: 0;
-		transition: background 0.15s;
-	`;
-	voiceBtn.addEventListener('mouseover', () => {
-		voiceBtn.style.background = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
-	});
-	voiceBtn.addEventListener('mouseout', () => {
-		voiceBtn.style.background = 'transparent';
-	});
-	voiceBtn.addEventListener('click', () => {
-		startVoiceSearch(searchInput, form);
-	});
-	voiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" focusable="false">
-		<path fill="${iconColor}" d="M12 2a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v5a2 2 0 0 0 4 0V6a2 2 0 0 0-2-2zm7 7a1 1 0 0 1 1 1 8 8 0 0 1-7 7.94V21h2a1 1 0 0 1 0 2H9a1 1 0 0 1 0-2h2v-1.06A8 8 0 0 1 4 12a1 1 0 0 1 2 0 6 6 0 0 0 12 0 1 1 0 0 1 1-1z"/>
-	</svg>`;
-
-	// Powered by label
+	// --- "Powered by LockedIn" label ---
 	const poweredBy = document.createElement('div');
 	poweredBy.textContent = 'Powered by LockedIn';
 	poweredBy.style.cssText = `
 		font-family: Roboto, Arial, sans-serif;
 		font-size: 12px;
 		color: ${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
-		margin-top: 4px;
 		user-select: none;
 	`;
 
-	form.appendChild(inputWrapper);
-	form.appendChild(searchBtn);
-	form.appendChild(voiceBtn);
-
 	panel.appendChild(logoContainer);
-	panel.appendChild(form);
+	panel.appendChild(searchSlot);
 	panel.appendChild(poweredBy);
 	wrapper.appendChild(panel);
 
 	return wrapper;
 }
 
-function startVoiceSearch(inputEl) {
-	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-	if (!SpeechRecognition) {
-		inputEl.focus();
-		return;
-	}
-
-	const recognition = new SpeechRecognition();
-	recognition.lang = navigator.language || 'en-US';
-	recognition.interimResults = false;
-	recognition.maxAlternatives = 1;
-
-	const originalPlaceholder = inputEl.placeholder;
-	inputEl.placeholder = 'Listening\u2026';
-	inputEl.disabled = true;
-
-	recognition.onresult = (event) => {
-		const transcript = event.results[0][0].transcript;
-		inputEl.value = transcript;
-		inputEl.disabled = false;
-		inputEl.placeholder = originalPlaceholder;
-		if (transcript.trim()) {
-			window.location.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(transcript.trim())}`;
-		}
-	};
-
-	recognition.onerror = () => {
-		inputEl.disabled = false;
-		inputEl.placeholder = originalPlaceholder;
-		inputEl.focus();
-	};
-
-	recognition.onend = () => {
-		if (inputEl.disabled) {
-			inputEl.disabled = false;
-			inputEl.placeholder = originalPlaceholder;
-		}
-	};
-
-	try {
-		recognition.start();
-	} catch (err) {
-		inputEl.disabled = false;
-		inputEl.placeholder = originalPlaceholder;
-	}
-}
-
 function hideFeed(shouldHide) {
 	const placeholderId = 'lockedin-feed-placeholder';
 
 	if (!shouldHide) {
+		// Restore feed elements
 		const feedElements = [
 			document.querySelector('ytd-rich-grid-renderer'),
 			document.querySelector('ytd-two-column-browse-results-renderer'),
@@ -547,17 +503,21 @@ function hideFeed(shouldHide) {
 			el.removeAttribute('data-lockedin-hidden');
 		});
 
+		// Move #center back to the masthead
+		restoreNavSearch();
+
+		// Remove the overlay widget
 		const placeholder = document.getElementById(placeholderId);
 		if (placeholder) placeholder.remove();
+
+		// Remove widget styles
 		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 		if (widgetStyles) widgetStyles.remove();
-		// Restore navbar search bar
-		const navHideStyle = document.getElementById('lockedin-hide-nav-search');
-		if (navHideStyle) navHideStyle.remove();
 		return;
 	}
 
 	if (window.location.pathname === '/' || window.location.pathname === '/home') {
+		// Hide the feed content
 		const feedSelectors = [
 			'ytd-rich-grid-renderer',
 			'ytd-two-column-browse-results-renderer #primary',
@@ -568,8 +528,7 @@ function hideFeed(shouldHide) {
 		];
 
 		feedSelectors.forEach(selector => {
-			const elements = document.querySelectorAll(selector);
-			elements.forEach(el => {
+			document.querySelectorAll(selector).forEach(el => {
 				if (!el.hasAttribute('data-lockedin-hidden')) {
 					el.style.setProperty('display', 'none', 'important');
 					el.setAttribute('data-lockedin-hidden', 'feed');
@@ -577,69 +536,50 @@ function hideFeed(shouldHide) {
 			});
 		});
 
-		// Hide the navbar search bar — it will live in our widget instead
-		if (!document.getElementById('lockedin-hide-nav-search')) {
-			const navSearchStyle = document.createElement('style');
-			navSearchStyle.id = 'lockedin-hide-nav-search';
-			navSearchStyle.textContent = `
-				/* Hide the search bar in the top nav — shown in our homepage widget */
-				#center.ytd-masthead,
-				#center:has(#search-form),
-				#search-container,
-				#search-form,
-				ytd-searchbox,
-				#masthead #center {
-					display: none !important;
-				}
-			`;
-			(document.head || document.documentElement).appendChild(navSearchStyle);
-		}
-
-		// If user has explicitly hidden the search widget, also restore navbar search and show nothing
+		// If the user turned off the search widget, just hide the feed — no overlay
 		if (latestSyncedSettings.showFeedSearchWidget === false) {
-			const existingPlaceholder = document.getElementById(placeholderId);
-			if (existingPlaceholder) existingPlaceholder.remove();
+			const existing = document.getElementById(placeholderId);
+			if (existing) existing.remove();
 			const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 			if (widgetStyles) widgetStyles.remove();
-			// Also restore the navbar search since we won't show our widget
-			const navHideStyle = document.getElementById('lockedin-hide-nav-search');
-			if (navHideStyle) navHideStyle.remove();
+			// Restore nav search if we previously relocated it
+			restoreNavSearch();
 			return;
 		}
 
+		// Create the overlay widget if not already present
 		if (!document.getElementById(placeholderId)) {
 			const widget = createSearchWidget();
 			document.body.appendChild(widget);
-			console.log('LockedIn: Search widget injected into body');
+			console.log('LockedIn: Search widget injected');
+		}
 
-			// If logo clone fell back (nav not ready yet), retry after nav loads
-			const logoOuter = widget.querySelector('[data-lockedin-logo-wrapper]');
-			if (!logoOuter) {
-				let retries = 0;
-				const retryLogo = setInterval(() => {
-					retries++;
-					const navLogoEl = document.querySelector('#start ytd-logo, ytd-logo, #start a[href="/"]');
-					if (navLogoEl || retries >= 10) {
-						clearInterval(retryLogo);
-						// Rebuild the widget with the now-available logo
-						const existing = document.getElementById(placeholderId);
-						if (existing && navLogoEl) {
-							existing.remove();
-							const rebuilt = createSearchWidget();
-							document.body.appendChild(rebuilt);
+		// Try to relocate the real #center into the search slot
+		const slot = document.getElementById('lockedin-search-slot');
+		if (slot && !_lockedinRelocation.el) {
+			if (!relocateNavSearch(slot)) {
+				// Nav not ready yet — retry every 300ms for up to 4.5 s
+				if (!_lockedinRelocation.retryTimer) {
+					let retries = 0;
+					_lockedinRelocation.retryTimer = setInterval(() => {
+						retries++;
+						const s = document.getElementById('lockedin-search-slot');
+						if (relocateNavSearch(s) || retries >= 15) {
+							clearInterval(_lockedinRelocation.retryTimer);
+							_lockedinRelocation.retryTimer = null;
 						}
-					}
-				}, 300);
+					}, 300);
+				}
 			}
 		}
+
 	} else {
+		// Not on homepage: remove widget and restore nav
 		const placeholder = document.getElementById(placeholderId);
 		if (placeholder) placeholder.remove();
 		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
 		if (widgetStyles) widgetStyles.remove();
-		// Restore navbar search when not on homepage
-		const navHideStyle = document.getElementById('lockedin-hide-nav-search');
-		if (navHideStyle) navHideStyle.remove();
+		restoreNavSearch();
 	}
 }
 
