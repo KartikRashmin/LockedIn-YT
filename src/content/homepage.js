@@ -540,14 +540,34 @@ function injectSearchWidgetCSS() {
 			text-overflow: ellipsis;
 		}
 
-		.lockedin-powered-by {
+		.lockedin-shortcut-hint {
 			font-family: Roboto, Arial, sans-serif;
-			font-size: 12px;
+			font-size: 13px;
 			color: var(--li-powered);
 			margin-top: 18px;
 			letter-spacing: 0.2px;
 			user-select: none;
 			text-align: center;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+		}
+
+		.lockedin-hint-kbd {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			font-family: Roboto, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+			font-size: 11px;
+			font-weight: 500;
+			color: var(--li-text);
+			background: var(--li-btn-bg);
+			border: 1px solid var(--li-border);
+			border-radius: 4px;
+			padding: 1px 5px;
+			line-height: 1.3;
+			box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
 		}
 	`;
 }
@@ -930,14 +950,14 @@ function buildSearchWidget() {
 		}
 	});
 
-	// Powered by LockedIn label
-	const poweredBy = document.createElement('div');
-	poweredBy.className = 'lockedin-powered-by';
-	poweredBy.textContent = 'Powered by LockedIn';
+	// Shortcut hint label
+	const shortcutHint = document.createElement('div');
+	shortcutHint.className = 'lockedin-shortcut-hint';
+	shortcutHint.innerHTML = 'Press <kbd class="lockedin-hint-kbd">Alt</kbd> + <kbd class="lockedin-hint-kbd">K</kbd> to focus search';
 
 	inner.appendChild(logoBox);
 	inner.appendChild(form);
-	inner.appendChild(poweredBy);
+	inner.appendChild(shortcutHint);
 	widget.appendChild(inner);
 
 	return widget;
