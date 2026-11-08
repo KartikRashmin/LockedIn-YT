@@ -170,6 +170,29 @@ const SEARCH_WIDGET_STYLE_ID = 'lockedin-search-widget-styles';
 let _navListenerAttached = false;
 let currentSuggestAbort = null;
 let suggestDebounceTimer = null;
+let nativeVoiceElement = null;
+let nativeVoiceOriginalParent = null;
+let nativeVoiceOriginalNextSibling = null;
+let voiceDialogObserver = null;
+
+function restoreNativeVoiceButton() {
+	if (nativeVoiceElement && nativeVoiceOriginalParent) {
+		if (nativeVoiceElement.parentElement !== nativeVoiceOriginalParent) {
+			try {
+				if (nativeVoiceOriginalNextSibling && nativeVoiceOriginalParent.contains(nativeVoiceOriginalNextSibling)) {
+					nativeVoiceOriginalParent.insertBefore(nativeVoiceElement, nativeVoiceOriginalNextSibling);
+				} else {
+					nativeVoiceOriginalParent.appendChild(nativeVoiceElement);
+				}
+			} catch (e) {
+				console.warn('LockedIn: Error restoring native voice button', e);
+			}
+		}
+	}
+	nativeVoiceElement = null;
+	nativeVoiceOriginalParent = null;
+	nativeVoiceOriginalNextSibling = null;
+}
 
 function removeSearchWidgetCSS() {
 	const style = document.getElementById(SEARCH_WIDGET_STYLE_ID);
@@ -185,25 +208,19 @@ function injectSearchWidgetCSS() {
 	}
 
 	const hideNavSearchRule = (latestSyncedSettings.showFeedSearchWidget !== false) ? `
-		/* Hide searchbox in the top navbar on homepage so there is only one search bar */
+		/* Hide entire center search container in the top navbar on homepage so there is only one search bar */
+		#masthead #center,
+		#center.ytd-masthead,
+		ytd-masthead #center,
 		ytd-masthead ytd-searchbox,
-		#masthead #center ytd-searchbox,
+		ytd-masthead yt-searchbox,
+		ytd-masthead .ytSearchboxComponentHost,
+		ytd-masthead #search,
+		ytd-masthead form#search-form,
 		ytd-searchbox,
+		yt-searchbox,
 		ytm-mobile-topbar-renderer .header-search-box {
 			display: none !important;
-		}
-
-		/* Visually hide the native navbar voice search button while preserving its layout presence for click delegation */
-		ytd-masthead #voice-search-button,
-		#masthead #voice-search-button,
-		ytd-masthead [aria-label*="Search with your voice" i] {
-			opacity: 0 !important;
-			pointer-events: none !important;
-			position: absolute !important;
-			width: 1px !important;
-			height: 1px !important;
-			overflow: hidden !important;
-			clip: rect(0, 0, 0, 0) !important;
 		}
 	` : '';
 
@@ -391,10 +408,75 @@ function injectSearchWidgetCSS() {
 			background: var(--li-btn-hover);
 		}
 
+		/* Slot for voice search button */
+		.lockedin-voice-slot {
+			margin-left: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+			width: 44px;
+			height: 44px;
+		}
+
+		/* Native YouTube voice search button styling when relocated into our search widget */
+		#${SEARCH_WIDGET_ID} #voice-search-button {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			position: static !important;
+			margin: 0 !important;
+			padding: 0 !important;
+			width: 44px !important;
+			height: 44px !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+			pointer-events: auto !important;
+			overflow: visible !important;
+			clip: auto !important;
+			flex-shrink: 0 !important;
+		}
+
+		#${SEARCH_WIDGET_ID} #voice-search-button ytd-button-renderer,
+		#${SEARCH_WIDGET_ID} #voice-search-button yt-button-shape,
+		#${SEARCH_WIDGET_ID} #voice-search-button yt-icon-button,
+		#${SEARCH_WIDGET_ID} #voice-search-button button {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			width: 44px !important;
+			height: 44px !important;
+			border-radius: 50% !important;
+			margin: 0 !important;
+			padding: 0 !important;
+			background: var(--li-btn-bg) !important;
+			color: var(--li-text) !important;
+			border: none !important;
+			cursor: pointer !important;
+			box-sizing: border-box !important;
+			transition: background 0.15s, transform 0.1s !important;
+		}
+
+		#${SEARCH_WIDGET_ID} #voice-search-button yt-icon,
+		#${SEARCH_WIDGET_ID} #voice-search-button svg {
+			fill: currentColor !important;
+			color: var(--li-text) !important;
+			width: 22px !important;
+			height: 22px !important;
+		}
+
+		#${SEARCH_WIDGET_ID} #voice-search-button button:hover {
+			background: var(--li-btn-hover) !important;
+		}
+
+		#${SEARCH_WIDGET_ID} #voice-search-button button:active {
+			transform: scale(0.95) !important;
+		}
+
 		.lockedin-voice-btn {
 			width: 44px;
 			height: 44px;
-			margin-left: 12px;
+			margin-left: 0;
 			border-radius: 50%;
 			border: none;
 			background: var(--li-btn-bg);
@@ -520,6 +602,11 @@ function injectSearchWidgetCSS() {
 }
 
 function removeSearchWidget() {
+	restoreNativeVoiceButton();
+	if (voiceDialogObserver) {
+		voiceDialogObserver.disconnect();
+		voiceDialogObserver = null;
+	}
 	const widget = document.getElementById(SEARCH_WIDGET_ID);
 	if (widget) widget.remove();
 	if (suggestDebounceTimer) {
@@ -684,13 +771,17 @@ function buildSearchWidget() {
 	searchBar.appendChild(clearBtn);
 	searchBar.appendChild(searchBtn);
 
-	// Voice search button
-	const voiceBtn = document.createElement('button');
-	voiceBtn.type = 'button';
-	voiceBtn.className = 'lockedin-voice-btn';
-	voiceBtn.setAttribute('aria-label', 'Search with your voice');
-	voiceBtn.title = 'Search with your voice';
-	voiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+	// Voice search container slot
+	const voiceSlot = document.createElement('div');
+	voiceSlot.className = 'lockedin-voice-slot';
+
+	// Placeholder voice button while native is attaching or as fallback
+	const fallbackVoiceBtn = document.createElement('button');
+	fallbackVoiceBtn.type = 'button';
+	fallbackVoiceBtn.className = 'lockedin-voice-btn';
+	fallbackVoiceBtn.setAttribute('aria-label', 'Search with your voice');
+	fallbackVoiceBtn.title = 'Search with your voice';
+	fallbackVoiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
 
 	// Suggestions box
 	const suggestionsBox = document.createElement('div');
@@ -702,7 +793,7 @@ function buildSearchWidget() {
 	suggestionsBox.appendChild(suggestionsList);
 
 	form.appendChild(searchBar);
-	form.appendChild(voiceBtn);
+	form.appendChild(voiceSlot);
 	form.appendChild(suggestionsBox);
 
 	// Autocomplete state
@@ -843,55 +934,41 @@ function buildSearchWidget() {
 	};
 	document.addEventListener('click', outsideClickListener);
 
-	// Voice search
-	function triggerNativeVoiceSearch() {
-		const selectors = [
-			'ytd-masthead #voice-search-button button',
-			'#voice-search-button button',
-			'button[aria-label="Search with your voice"]',
-			'button[aria-label*="Search with your voice" i]',
-			'button[aria-label*="voice" i]',
-			'ytd-masthead #voice-search-button [role="button"]',
-			'#voice-search-button [role="button"]',
-			'ytd-masthead #voice-search-button yt-icon-button',
-			'#voice-search-button yt-icon-button',
-			'ytd-masthead #voice-search-button ytd-button-renderer',
-			'#voice-search-button ytd-button-renderer',
-			'#voice-search-button'
-		];
+	// Native YouTube Voice Search integration
+	function attachNativeVoiceButton() {
+		const nativeBtn = document.querySelector('ytd-masthead #voice-search-button, #masthead #voice-search-button, #voice-search-button');
+		if (!nativeBtn) return false;
+		if (voiceSlot.contains(nativeBtn)) return true;
 
-		for (const sel of selectors) {
-			const el = document.querySelector(sel);
-			if (el) {
-				try {
-					el.click();
-					el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true, view: window }));
-					el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, composed: true, view: window }));
-					el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
-					return true;
-				} catch (e) {
-					console.warn('LockedIn: Failed clicking native voice button', e);
-				}
-			}
+		if (!nativeVoiceOriginalParent) {
+			nativeVoiceElement = nativeBtn;
+			nativeVoiceOriginalParent = nativeBtn.parentElement;
+			nativeVoiceOriginalNextSibling = nativeBtn.nextSibling;
 		}
 
-		try {
-			const masthead = document.querySelector('ytd-masthead');
-			if (masthead && masthead.shadowRoot) {
-				for (const sel of selectors) {
-					const el = masthead.shadowRoot.querySelector(sel);
-					if (el) {
-						el.click();
-						el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
-						return true;
-					}
-				}
-			}
-		} catch (e) {}
-
-		return false;
+		voiceSlot.innerHTML = '';
+		voiceSlot.appendChild(nativeBtn);
+		return true;
 	}
 
+	if (!attachNativeVoiceButton()) {
+		voiceSlot.appendChild(fallbackVoiceBtn);
+
+		let attachRetries = 0;
+		const attachInterval = setInterval(() => {
+			attachRetries++;
+			if (attachNativeVoiceButton() || attachRetries >= 20 || !document.getElementById(SEARCH_WIDGET_ID)) {
+				clearInterval(attachInterval);
+			}
+		}, 150);
+	}
+
+	// Close suggestions when user clicks voice slot
+	voiceSlot.addEventListener('click', () => {
+		closeSuggestions();
+	});
+
+	// Web Speech API emergency fallback (used only if YouTube native voice button is absent)
 	function startWebSpeech() {
 		const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 		if (!SpeechRecognition) {
@@ -902,24 +979,37 @@ function buildSearchWidget() {
 		try {
 			const recognition = new SpeechRecognition();
 			recognition.lang = navigator.language || 'en-US';
-			recognition.interimResults = false;
+			recognition.interimResults = true;
 			recognition.maxAlternatives = 1;
 
 			const originalPlaceholder = searchInput.placeholder;
 			searchInput.placeholder = 'Listening…';
-			voiceBtn.classList.add('listening');
+			fallbackVoiceBtn.classList.add('listening');
 
 			const stopListening = () => {
-				voiceBtn.classList.remove('listening');
+				fallbackVoiceBtn.classList.remove('listening');
 				searchInput.placeholder = originalPlaceholder;
 			};
 
 			recognition.onresult = (event) => {
-				stopListening();
-				const transcript = event.results?.[0]?.[0]?.transcript;
-				if (transcript && transcript.trim()) {
-					searchInput.value = transcript.trim();
-					executeSearch(transcript.trim());
+				let interim = '';
+				let finalTranscript = '';
+				for (let i = 0; i < event.results.length; i++) {
+					const item = event.results[i];
+					if (item.isFinal) {
+						finalTranscript += item[0].transcript;
+					} else {
+						interim += item[0].transcript;
+					}
+				}
+				const currentText = (finalTranscript || interim).trim();
+				if (currentText) {
+					searchInput.value = currentText;
+					clearBtn.style.display = 'flex';
+				}
+				if (finalTranscript.trim()) {
+					stopListening();
+					executeSearch(finalTranscript.trim());
 				}
 			};
 
@@ -936,32 +1026,123 @@ function buildSearchWidget() {
 			recognition.start();
 		} catch (e) {
 			console.warn('LockedIn: Speech recognition could not start', e);
-			voiceBtn.classList.remove('listening');
+			fallbackVoiceBtn.classList.remove('listening');
 			searchInput.focus();
 		}
 	}
 
-	voiceBtn.addEventListener('click', (e) => {
+	fallbackVoiceBtn.addEventListener('click', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 		closeSuggestions();
 
-		const triggered = triggerNativeVoiceSearch();
-
-		if (!triggered) {
-			startWebSpeech();
+		if (attachNativeVoiceButton()) {
+			const btn = nativeVoiceElement?.querySelector('button') || nativeVoiceElement;
+			if (btn) btn.click();
 			return;
 		}
 
-		// Verify whether YouTube's native voice dialog opened; if not, fall back to Web Speech
-		setTimeout(() => {
-			const dialog = document.querySelector('ytd-voice-search-dialog-renderer');
-			const isVisible = dialog && dialog.offsetParent !== null && dialog.getAttribute('aria-hidden') !== 'true';
-			if (!isVisible) {
-				startWebSpeech();
-			}
-		}, 250);
+		startWebSpeech();
 	});
+
+	// Sync speech transcript from YouTube's native voice search dialog live into our search widget
+	function initVoiceTranscriptSync() {
+		if (voiceDialogObserver) {
+			voiceDialogObserver.disconnect();
+			voiceDialogObserver = null;
+		}
+
+		const isStatusString = (text) => {
+			if (!text) return true;
+			const lower = text.trim().toLowerCase();
+			if (lower.length === 0) return true;
+			const statusList = [
+				'listening',
+				'listening…',
+				'listening...',
+				'didn\'t hear that',
+				'try again',
+				'microphone off',
+				'audio error',
+				'to search by voice',
+				'go to your browser settings',
+				'allow access to your microphone',
+				'tap microphone to try again',
+				'say something'
+			];
+			return statusList.some(s => lower.includes(s));
+		};
+
+		const syncText = (rawText) => {
+			if (!rawText) return;
+			const trimmed = rawText.trim();
+			if (!trimmed || isStatusString(trimmed)) return;
+
+			if (searchInput.value !== trimmed) {
+				searchInput.value = trimmed;
+				clearBtn.style.display = 'flex';
+			}
+		};
+
+		const inspectDialog = (dialog) => {
+			if (!dialog) return;
+
+			const checkRoot = (root) => {
+				if (!root) return;
+				const targets = root.querySelectorAll('#text, yt-formatted-string, #transcript, .transcript, [id*="text"], [class*="transcript"], [role="heading"], div.content');
+				for (const target of targets) {
+					const txt = target.textContent || target.innerText || '';
+					syncText(txt);
+				}
+			};
+
+			checkRoot(dialog);
+			if (dialog.shadowRoot) {
+				checkRoot(dialog.shadowRoot);
+			}
+		};
+
+		voiceDialogObserver = new MutationObserver(() => {
+			const dialog = document.querySelector('ytd-voice-search-dialog-renderer');
+			if (dialog) {
+				inspectDialog(dialog);
+
+				if (!dialog._lockedinObserved) {
+					dialog._lockedinObserved = true;
+					const dialogObs = new MutationObserver(() => {
+						inspectDialog(dialog);
+					});
+					dialogObs.observe(dialog, {
+						childList: true,
+						subtree: true,
+						characterData: true
+					});
+					if (dialog.shadowRoot) {
+						dialogObs.observe(dialog.shadowRoot, {
+							childList: true,
+							subtree: true,
+							characterData: true
+						});
+					}
+				}
+			}
+
+			// Also sync from YouTube native masthead search input if updated
+			const nativeInput = document.querySelector('ytd-masthead input#search, yt-searchbox input, #search-input input');
+			if (nativeInput && nativeInput.value && nativeInput.value.trim() && searchInput.value !== nativeInput.value.trim()) {
+				searchInput.value = nativeInput.value.trim();
+				clearBtn.style.display = 'flex';
+			}
+		});
+
+		voiceDialogObserver.observe(document.body, {
+			childList: true,
+			subtree: true,
+			characterData: true
+		});
+	}
+
+	initVoiceTranscriptSync();
 
 	// Shortcut hint label
 	const shortcutHint = document.createElement('div');
