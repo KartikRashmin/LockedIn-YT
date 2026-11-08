@@ -17,7 +17,8 @@
   "host_permissions": [
     "*://www.youtube.com/*",
     "*://m.youtube.com/*",
-    "*://youtube.com/*"
+    "*://youtube.com/*",
+    "*://suggestqueries-clients6.youtube.com/*"
   ],
   "content_scripts": [
     {
