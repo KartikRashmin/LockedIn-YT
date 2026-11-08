@@ -1335,6 +1335,7 @@ body {
   width: 16px;
   height: 16px;
   color: hsla(0, 0%, 100%, 0.7);
+  transform-origin: bottom center;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
   display: block;
 }
