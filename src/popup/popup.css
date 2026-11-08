@@ -1336,12 +1336,11 @@ body {
   height: 16px;
   color: hsla(0, 0%, 100%, 0.7);
   transform-origin: bottom center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: block;
 }
 
 .birthday-cake-container:hover .birthday-cake-icon {
-  color: #ff6b81;
   animation: cakePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
