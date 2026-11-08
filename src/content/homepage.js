@@ -252,6 +252,8 @@ const SEARCH_WIDGET_STYLE_ID = 'lockedin-search-widget-styles';
 let _navListenerAttached = false;
 let currentSuggestAbort = null;
 let suggestDebounceTimer = null;
+let currentOutsideClickListener = null;
+let currentSlashListener = null;
 
 function removeSearchWidgetCSS() {
 	const style = document.getElementById(SEARCH_WIDGET_STYLE_ID);
@@ -563,6 +565,14 @@ function removeSearchWidget() {
 		currentSuggestAbort.abort();
 		currentSuggestAbort = null;
 	}
+	if (currentOutsideClickListener) {
+		document.removeEventListener('click', currentOutsideClickListener);
+		currentOutsideClickListener = null;
+	}
+	if (currentSlashListener) {
+		window.removeEventListener('keydown', currentSlashListener, true);
+		currentSlashListener = null;
+	}
 }
 
 async function fetchYouTubeSuggestions(query) {
@@ -868,12 +878,33 @@ function buildSearchWidget() {
 	});
 
 	// Close suggestions on outside click
-	const outsideClickListener = (e) => {
+	if (currentOutsideClickListener) {
+		document.removeEventListener('click', currentOutsideClickListener);
+	}
+	currentOutsideClickListener = (e) => {
 		if (!form.contains(e.target)) {
 			closeSuggestions();
 		}
 	};
-	document.addEventListener('click', outsideClickListener);
+	document.addEventListener('click', currentOutsideClickListener);
+
+	// Pressing '/' or 'Ctrl+K' / 'Cmd+K' focuses search input (YouTube's native search key)
+	if (currentSlashListener) {
+		window.removeEventListener('keydown', currentSlashListener, true);
+	}
+	currentSlashListener = (e) => {
+		const tag = e.target?.tagName;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+		if (e.key === '/' || e.key === 'Slash' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+			if (document.getElementById(SEARCH_WIDGET_ID)) {
+				e.preventDefault();
+				e.stopPropagation();
+				searchInput.focus();
+				searchInput.select();
+			}
+		}
+	};
+	window.addEventListener('keydown', currentSlashListener, true);
 
 	// Voice search
 	voiceBtn.addEventListener('click', () => {
