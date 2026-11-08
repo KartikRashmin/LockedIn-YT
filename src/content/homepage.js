@@ -266,6 +266,17 @@ function injectSearchWidgetCSS() {
 		(document.head || document.documentElement).appendChild(style);
 	}
 
+	const hideNavSearchRule = (latestSyncedSettings.showFeedSearchWidget !== false) ? `
+		/* Hide search section in the top navbar on homepage so there is only one search option */
+		#masthead #center,
+		#center.ytd-masthead,
+		ytd-masthead #center,
+		ytd-searchbox,
+		ytm-mobile-topbar-renderer .header-search-box {
+			display: none !important;
+		}
+	` : '';
+
 	style.textContent = `
 		/* Hide feed contents & header chip bar on homepage, leaving browse container active */
 		ytd-browse[page-subtype="home"] ytd-rich-grid-renderer,
@@ -276,6 +287,8 @@ function injectSearchWidgetCSS() {
 		ytm-browse .chip-bar {
 			display: none !important;
 		}
+
+		${hideNavSearchRule}
 
 		/* Homepage Search Widget container */
 		#${SEARCH_WIDGET_ID} {
