@@ -228,260 +228,157 @@ function redirectToSubscriptions(shouldRedirect) {
 	}
 }
 
-// ===== YOUTUBE SEARCH WIDGET (CSS-REPOSITION MODE) =====
+// ===== YOUTUBE SEARCH WIDGET (MASTHEAD RESHAPE) =====
 //
-// We do NOT move #center in the DOM. Instead we use CSS position:fixed
-// to visually place it at screen-centre while it stays inside ytd-masthead.
-// This preserves ALL of YouTube's JS wiring — autocomplete suggestions,
-// voice-search, keyboard shortcuts — because the element's DOM context
-// is unchanged.
+// Technique reverse-engineered from FocusTube extension (dnnpgmbhdojpjkpeeafgdelohfhbpiga).
+// Instead of moving DOM nodes or using position:fixed overlays, we just
+// reshape the masthead #container into a full-viewport-height column that
+// vertically centres the logo (#start) and search bar (#center).
+// Everything stays in its original DOM position → autocomplete, voice search,
+// keyboard shortcuts, and all of YouTube's internal JS work perfectly.
 //
-// Layout (all position:fixed, relative to viewport centre):
-//
-//   ┌──────────────────────────┐
-//   │  YouTube logo  (~40px)   │  top: calc(50% - 60px)
-//   │                          │
-//   │  [  Search bar  ] 🎤     │  centre: 50%  (via CSS on #center)
-//   │                          │
-//   │  Powered by LockedIn     │  top: calc(50% + 60px)
-//   └──────────────────────────┘
+// What the CSS does:
+//  1. #masthead #container  → full-height flex column, centred, margin-top pulls
+//                             it up so logo+search sit at true visual centre
+//  2. #start > *:not(ytd-topbar-logo-renderer) → hide hamburger / other icons
+//  3. #end → hide (create button, notifications, avatar)
+//  4. #guide-content, ytd-mini-guide-renderer → hide left sidebar
+//  5. ytd-topbar-logo-renderer → scale(3) so logo is big like Google
+//  6. #center / #search-container → style as a Google-style search bar
+//  7. #contents, #header → hide feed content (belt-and-suspenders)
 
-const WIDGET_ID   = 'lockedin-feed-placeholder';
-const CSS_REPOS_ID = 'lockedin-center-reposition'; // <style> for #center CSS
-const CSS_WIDGET_ID = 'lockedin-search-widget-styles'; // <style> for slot tweaks
+const STYLE_ID = 'lockedin-masthead-reshape';
 
-// Selectors for the logo in the top-left of the nav
-const NAV_LOGO_SELECTORS = [
-	'#start ytd-logo',
-	'ytd-masthead #start ytd-logo',
-	'ytd-logo',
-	'#start a[href="/"]',
-	'#logo-icon-container',
-];
-
-// Clone the visible nav logo (we clone, not move, so the nav keeps its logo)
-function cloneNavLogo() {
-	for (const sel of NAV_LOGO_SELECTORS) {
-		const el = document.querySelector(sel);
-		if (!el) continue;
-		try {
-			const clone = el.cloneNode(true);
-			clone.querySelectorAll('a').forEach(a => {
-				a.removeAttribute('href');
-				a.style.cursor = 'default';
-				a.style.pointerEvents = 'none';
-			});
-			clone.style.pointerEvents = 'none';
-			return clone;
-		} catch (e) { /* try next */ }
-	}
-	return null;
-}
-
-// Inject (or update) the <style> that CSS-repositions #center to screen-centre.
-// The search bar's midpoint sits at exactly 50% of the viewport height.
-// Logo is 60px above that; "Powered by" is 60px below.
-function injectRepositionCSS() {
-	let style = document.getElementById(CSS_REPOS_ID);
+function injectMastheadReshapeCSS() {
+	let style = document.getElementById(STYLE_ID);
 	if (!style) {
 		style = document.createElement('style');
-		style.id = CSS_REPOS_ID;
+		style.id = STYLE_ID;
 		(document.head || document.documentElement).appendChild(style);
 	}
+
+	const isDark = isYouTubeDarkMode();
+	// YouTube dark mode uses #0f0f0f for the page bg; light is #fff
+	const borderColor  = isDark ? '#303030' : '#dfe1e5';
+	const shadowColor  = isDark ? 'rgba(0,0,0,0.5)' : 'rgba(32,33,36,0.28)';
+	const poweredColor = isDark ? '#aaaaaa' : '#5f6368';
+
 	style.textContent = `
-		/* ===== LockedIn: reposition search bar to viewport centre ===== */
+		/* ===== LockedIn: Google-style homepage search ===== */
 
-		/* Pull #center out of the masthead flow and fix it at screen-centre */
-		ytd-masthead #center,
-		#masthead-container #center,
-		#masthead #center {
-			position: fixed !important;
-			top:  50% !important;
-			left: 50% !important;
-			transform: translate(-50%, -50%) !important;
-			width:     min(580px, 90vw) !important;
-			max-width: 90vw !important;
-			min-width: 0    !important;
-			margin:    0    !important;
-			padding:   0    !important;
-			flex:      none !important;
-			z-index:   2001 !important;
-			display:   flex !important;
-			align-items: center !important;
+		/* Hide left sidebar */
+		#guide-content,
+		ytd-mini-guide-renderer {
+			display: none !important;
 		}
 
-		/* Make the searchbox inside fill the available width */
-		ytd-masthead #center ytd-searchbox,
-		#masthead #center ytd-searchbox,
-		ytd-masthead #center #search-container,
-		ytd-masthead #center #search-form {
-			width:     100% !important;
-			max-width: 100% !important;
-			flex:      1    !important;
+		/* Hide feed content (#contents) and chip bar (#header) */
+		ytd-browse[page-subtype="home"] #contents,
+		ytd-browse[page-subtype="home"] #header {
+			display: none !important;
 		}
 
-		/* Keep the autocomplete suggestion dropdown visible & above overlay */
-		ytd-masthead #center ytd-searchbox #suggestions-popup,
-		ytd-masthead #center ytd-searchbox tp-yt-iron-dropdown,
-		ytd-masthead #center [slot="suggestions"] {
-			z-index: 2002 !important;
+		/* Hide everything in #start EXCEPT the logo */
+		#masthead #start > *:not(ytd-topbar-logo-renderer) {
+			display: none !important;
+		}
+
+		/* Hide the right-side nav buttons (create, notifications, avatar) */
+		#masthead #end {
+			display: none !important;
+		}
+
+		/* Reshape the masthead container to a vertical centred column */
+		#masthead #container {
+			flex-direction: column !important;
+			align-items:    center !important;
+			justify-content: center !important;
+			height: 100vh !important;
+			padding: 0 !important;
+			margin-top: -18rem !important; /* pulls centroid up slightly, same as FocusTube */
+			position: relative !important;
+		}
+
+		/* Space between logo and search bar */
+		#masthead #container #start,
+		#masthead #container #center {
+			margin: 20px 0 !important;
+		}
+
+		/* Stop #center from stretching to fill the flex row */
+		#center.ytd-masthead {
+			flex: 0 !important;
+		}
+
+		/* Scale up the YouTube logo — same factor as FocusTube */
+		ytd-topbar-logo-renderer {
+			transform: scale(3) !important;
+			margin-bottom: 30px !important;
+			justify-content: center !important;
+		}
+
+		/* Fix icon padding after scale */
+		yt-icon.ytd-logo {
+			padding: 18px 14px 6px 6px !important;
+		}
+
+		/* Google-style search bar */
+		#masthead #search-container {
+			border-radius: 24px !important;
+			border: 1px solid ${borderColor} !important;
+			box-shadow: 0 1px 6px 0 ${shadowColor} !important;
+			max-width: 580px !important;
+			width: 580px !important;
+		}
+
+		/* Remove extra margin from searchbox host */
+		.ytSearchboxComponentHost {
+			margin: 0 !important;
+		}
+
+		/* Set comfortable width for the text input */
+		.ytSearchboxComponentInputBox {
+			margin: 0 !important;
+			width: 400px !important;
+		}
+
+		/* "Powered by LockedIn" label via ::after pseudo-element */
+		#masthead #container::after {
+			content: "Powered by LockedIn";
+			display: block;
+			width: 100%;
+			text-align: center;
+			font-family: Roboto, Arial, sans-serif;
+			font-size: 13px;
+			color: ${poweredColor};
+			margin-top: 5px;
+			position: relative;
+			z-index: 1000;
 		}
 	`;
 }
 
-function removeRepositionCSS() {
-	const s = document.getElementById(CSS_REPOS_ID);
+function removeMastheadReshapeCSS() {
+	const s = document.getElementById(STYLE_ID);
 	if (s) s.remove();
 }
 
-// Build the overlay that shows the logo and "Powered by LockedIn".
-// #center is NOT inside this overlay — it is CSS-repositioned separately.
-function createSearchWidget() {
-	const isDark = isYouTubeDarkMode();
-
-	// Full-screen transparent backdrop (pointer-events:none so clicks pass through)
-	const wrapper = document.createElement('div');
-	wrapper.id = WIDGET_ID;
-	wrapper.style.cssText = `
-		position: fixed;
-		inset: 0;
-		pointer-events: none;
-		z-index: 2000;
-		background: transparent;
-	`;
-
-	// --- Logo (position:fixed, 60px above search-bar centre) ---
-	const logoWrap = document.createElement('div');
-	logoWrap.style.cssText = `
-		position: fixed;
-		top:  calc(50% - 60px);
-		left: 50%;
-		transform: translate(-50%, -50%);
-		pointer-events: none;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	`;
-
-	const logoClone = cloneNavLogo();
-	if (logoClone) {
-		// Scale the nav logo up — it is ~18-20 px tall in the bar, we want ~38 px
-		const scaleWrap = document.createElement('div');
-		scaleWrap.style.cssText = `
-			transform: scale(2);
-			transform-origin: center center;
-			pointer-events: none;
-			display: flex;
-			align-items: center;
-		`;
-		scaleWrap.appendChild(logoClone);
-
-		// Outer box reserves space for the scaled element
-		const logoOuter = document.createElement('div');
-		logoOuter.style.cssText = `
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			height: 40px;
-			min-width: 180px;
-		`;
-		logoOuter.appendChild(scaleWrap);
-		logoWrap.appendChild(logoOuter);
-	} else {
-		// Fallback inline SVG (play button + wordmark)
-		logoWrap.innerHTML = `
-			<svg viewBox="0 0 203 46" width="203" height="46"
-			     xmlns="http://www.w3.org/2000/svg" aria-label="YouTube">
-				<path d="M64.14 8.19A8.08 8.08 0 0 0 58.49 2.5C53.37 1.1 32.86 1.1 32.86 1.1
-				         S12.35 1.1 7.23 2.5a8.08 8.08 0 0 0-5.65 5.69C.17 13.37.17 23 .17 23
-				         s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69
-				         c5.12 1.4 25.63 1.4 25.63 1.4s20.51 0 25.63-1.4
-				         a8.08 8.08 0 0 0 5.65-5.69C65.55 32.63 65.55 23 65.55 23
-				         s0-9.63-1.41-14.81z" fill="#FF0000"/>
-				<path d="M26.44 32.86L43.14 23 26.44 13.14v19.72z" fill="#fff"/>
-				<text x="74" y="34"
-				      font-family="'YouTube Noto',Roboto,Arial,sans-serif"
-				      font-size="30" font-weight="500" letter-spacing="-0.75"
-				      fill="${isDark ? '#fff' : '#030303'}">YouTube</text>
-			</svg>`;
-	}
-
-	// --- "Powered by LockedIn" label (60px below search-bar centre) ---
-	const poweredBy = document.createElement('div');
-	poweredBy.textContent = 'Powered by LockedIn';
-	poweredBy.style.cssText = `
-		position: fixed;
-		top:  calc(50% + 60px);
-		left: 50%;
-		transform: translateX(-50%);
-		font-family: Roboto, Arial, sans-serif;
-		font-size: 12px;
-		color: ${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
-		user-select: none;
-		pointer-events: none;
-		white-space: nowrap;
-	`;
-
-	wrapper.appendChild(logoWrap);
-	wrapper.appendChild(poweredBy);
-
-	return wrapper;
-}
-
-// Teardown: remove overlay + reposition CSS.
-// Called on restore OR on any navigation away from home.
-function teardownSearchWidget() {
-	const placeholder = document.getElementById(WIDGET_ID);
-	if (placeholder) placeholder.remove();
-	removeRepositionCSS();
-	// Also remove any old search-widget-styles if present
-	const old = document.getElementById(CSS_WIDGET_ID);
-	if (old) old.remove();
-}
-
-// One-time navigation listener — tears down widget the moment the user
-// navigates away (e.g. submits a search) so it never overlaps search results.
+// yt-navigate-start fires the instant SPA navigation begins — before any
+// content changes — so we can remove the reshape CSS the moment the user
+// leaves the homepage (e.g. after submitting a search).
 let _navListenerAttached = false;
 function ensureNavTeardownListener() {
 	if (_navListenerAttached) return;
 	_navListenerAttached = true;
 
 	function onNavigate() {
-		// Tear down immediately if we just left the homepage
 		if (!isHomePath()) {
-			teardownSearchWidget();
+			removeMastheadReshapeCSS();
 		}
 	}
 
-	// yt-navigate-start fires as soon as navigation begins (before content changes)
 	window.addEventListener('yt-navigate-start',  onNavigate, true);
 	window.addEventListener('yt-navigate-finish', onNavigate, true);
-}
-
-// Logo-clone retry: if ytd-logo wasn't in DOM when widget was first created,
-// swap the fallback SVG for the real clone once it appears.
-let _logoRetryTimer = null;
-function scheduleLogoRetry() {
-	if (_logoRetryTimer) return;
-	let attempts = 0;
-	_logoRetryTimer = setInterval(() => {
-		attempts++;
-		const clone = cloneNavLogo();
-		const wrapper = document.getElementById(WIDGET_ID);
-		if (!wrapper || attempts >= 20) {
-			clearInterval(_logoRetryTimer);
-			_logoRetryTimer = null;
-			return;
-		}
-		if (clone) {
-			// Real logo is now available — rebuild the logo section
-			clearInterval(_logoRetryTimer);
-			_logoRetryTimer = null;
-			// Re-create widget with real logo
-			teardownSearchWidget();
-			hideFeed(true);
-		}
-	}, 250);
 }
 
 function hideFeed(shouldHide) {
@@ -490,18 +387,19 @@ function hideFeed(shouldHide) {
 		[
 			document.querySelector('ytd-rich-grid-renderer'),
 			document.querySelector('ytd-two-column-browse-results-renderer'),
-			...document.querySelectorAll('[data-lockedin-hidden="feed"]')
+			...document.querySelectorAll('[data-lockedin-hidden="feed"]'),
 		].filter(Boolean).forEach(el => {
 			el.style.removeProperty('display');
 			el.removeAttribute('data-lockedin-hidden');
 		});
 
-		teardownSearchWidget();
+		removeMastheadReshapeCSS();
 		return;
 	}
 
 	if (isHomePath()) {
-		// Hide feed content
+		// Belt-and-suspenders: also hide via data-attr so runAll()'s feed
+		// selectors don't fight with the CSS above
 		[
 			'ytd-rich-grid-renderer',
 			'ytd-two-column-browse-results-renderer #primary',
@@ -518,32 +416,21 @@ function hideFeed(shouldHide) {
 			});
 		});
 
-		// If the user turned off the search widget, just hide the feed — no overlay
+		// If the user turned off the search widget show nothing (blank page)
 		if (latestSyncedSettings.showFeedSearchWidget === false) {
-			teardownSearchWidget();
+			removeMastheadReshapeCSS();
 			return;
 		}
 
-		// Inject the CSS that visually moves #center to screen-centre
-		injectRepositionCSS();
+		// Inject the masthead reshape CSS (idempotent — updates if already present)
+		injectMastheadReshapeCSS();
 
-		// Create the logo + "Powered by" overlay if not already present
-		if (!document.getElementById(WIDGET_ID)) {
-			const widget = createSearchWidget();
-			document.body.appendChild(widget);
-			console.log('LockedIn: Search widget shown');
-
-			// If logo clone fell back to SVG, retry once ytd-logo is available
-			const hasRealLogo = !!document.querySelector(NAV_LOGO_SELECTORS[0]);
-			if (!hasRealLogo) scheduleLogoRetry();
-		}
-
-		// Attach the navigation listener that tears down widget on page change
+		// Attach the navigation listener that removes CSS on page change
 		ensureNavTeardownListener();
 
 	} else {
 		// Not on homepage — remove everything immediately
-		teardownSearchWidget();
+		removeMastheadReshapeCSS();
 	}
 }
 
