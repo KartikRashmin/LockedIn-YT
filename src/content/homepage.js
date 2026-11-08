@@ -224,11 +224,11 @@ function injectSearchWidgetCSS() {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			justify-content: center;
+			justify-content: flex-start;
 			width: 100%;
-			min-height: calc(100vh - 56px - 60px);
+			min-height: calc(100vh - 56px);
 			box-sizing: border-box;
-			padding: 20px 24px 80px 24px;
+			padding: clamp(60px, 18vh, 180px) 24px 60px 24px;
 			position: relative;
 			z-index: 10;
 			pointer-events: auto;
