@@ -332,8 +332,37 @@ function injectSearchWidgetCSS() {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			height: 70px;
-			margin-bottom: 24px;
+			height: 60px;
+			margin-bottom: 28px;
+			user-select: none;
+		}
+
+		.lockedin-logo-link {
+			display: flex;
+			align-items: center;
+			cursor: default;
+			user-select: none;
+			text-decoration: none;
+		}
+
+		.lockedin-logo-text {
+			font-family: 'YouTube Sans', 'YouTube Noto', Roboto, Arial, sans-serif;
+			font-size: 34px;
+			font-weight: 700;
+			letter-spacing: -1.2px;
+			color: var(--li-text);
+			margin-left: 6px;
+			line-height: 1;
+			user-select: none;
+		}
+
+		.lockedin-country-code {
+			font-family: Roboto, Arial, sans-serif;
+			font-size: 11px;
+			color: var(--li-subtext);
+			margin-left: 4px;
+			align-self: flex-start;
+			margin-top: 2px;
 			user-select: none;
 		}
 
@@ -555,55 +584,89 @@ function buildSearchWidget() {
 	const logoBox = document.createElement('div');
 	logoBox.className = 'lockedin-logo-box';
 
-	function setupLogo() {
-		const navLogo = document.querySelector('ytd-topbar-logo-renderer, a#logo, #logo');
-		if (navLogo) {
-			const clone = navLogo.cloneNode(true);
-			clone.id = 'lockedin-cloned-logo';
-			clone.removeAttribute('href');
-			clone.querySelectorAll('a').forEach(a => {
-				a.removeAttribute('href');
-				a.style.cursor = 'default';
-				a.onclick = e => {
-					e.preventDefault();
-					e.stopPropagation();
-				};
-			});
-			clone.style.cssText = `
-				display: flex !important;
-				align-items: center !important;
-				justify-content: center !important;
-				transform: scale(2.2);
-				transform-origin: center center;
-				pointer-events: none;
-				user-select: none;
-			`;
-			logoBox.innerHTML = '';
-			logoBox.appendChild(clone);
-			return true;
+	function renderLogo() {
+		logoBox.innerHTML = '';
+
+		const isDark = isYouTubeDarkMode();
+		const country = document.querySelector('ytd-topbar-logo-renderer #country-code, #country-code')?.textContent?.trim() || '';
+
+		// Check if we can extract a complete, rendered SVG from the navbar logo
+		let topbarSvg = null;
+		try {
+			const topbarLogo = document.querySelector('ytd-topbar-logo-renderer, a#logo, #logo');
+			if (topbarLogo) {
+				const ytIcon = topbarLogo.querySelector('yt-icon') || document.querySelector('ytd-topbar-logo-renderer yt-icon');
+				const candidateSvg = ytIcon?.shadowRoot?.querySelector('svg') || topbarLogo.querySelector('svg');
+				// Only use if it has actual path elements inside (at least the red play box and triangle or text)
+				if (candidateSvg && candidateSvg.querySelectorAll('path').length >= 2) {
+					topbarSvg = candidateSvg;
+				}
+			}
+		} catch (e) {
+			topbarSvg = null;
 		}
 
-		// Fallback SVG logo while navLogo is loading
-		logoBox.innerHTML = `
-			<div style="display:flex;align-items:center;justify-content:center;transform:scale(2.2);transform-origin:center center;user-select:none;">
-				<svg viewBox="0 0 90 20" width="90" height="20" style="display:block;">
-					<path d="M27.9727 3.12324C27.6435 1.89323 26.6768 0.926623 25.4468 0.597366C23.2197 2.24288e-07 14.285 0 14.285 0C14.285 0 5.35042 2.24288e-07 3.12323 0.597366C1.89323 0.926623 0.926623 1.89323 0.597366 3.12324C2.24288e-07 5.35042 0 10 0 10C0 10 2.24288e-07 14.6496 0.597366 16.8768C0.926623 18.1068 1.89323 19.0734 3.12323 19.4026C5.35042 20 14.285 20 14.285 20C14.285 20 23.2197 20 25.4468 19.4026C26.6768 19.0734 27.6435 18.1068 27.9727 16.8768C28.5701 14.6496 28.5701 10 28.5701 10C28.5701 10 28.5677 5.35042 27.9727 3.12324Z" fill="#FF0000"/>
-					<path d="M11.4253 14.2854L18.8477 10.0004L11.4253 5.71533V14.2854Z" fill="white"/>
-				</svg>
-				<span style="font-family:'YouTube Noto',Roboto,Arial,sans-serif;font-size:20px;font-weight:600;letter-spacing:-0.5px;color:var(--li-text);margin-left:6px;line-height:1;">YouTube</span>
-			</div>
-		`;
-		return false;
+		const logoWrapper = document.createElement('div');
+		logoWrapper.className = 'lockedin-logo-link';
+
+		if (topbarSvg) {
+			const cloneSvg = topbarSvg.cloneNode(true);
+			cloneSvg.removeAttribute('id');
+			cloneSvg.setAttribute('width', '150');
+			cloneSvg.setAttribute('height', '36');
+			cloneSvg.style.cssText = `
+				width: 150px !important;
+				height: 36px !important;
+				display: block !important;
+				color: var(--li-text) !important;
+				fill: currentColor !important;
+				overflow: visible !important;
+			`;
+			// Ensure red play box stays red and white play triangle stays white
+			cloneSvg.querySelectorAll('path').forEach(p => {
+				const fill = p.getAttribute('fill');
+				if (fill && fill.toUpperCase() === '#FF0000') {
+				p.style.fill = '#FF0000';
+				}
+			});
+			const playTriangle = cloneSvg.querySelector('path[d*="11.42"], path[d*="11.4"]');
+			if (playTriangle) {
+				playTriangle.style.fill = '#FFFFFF';
+			}
+
+			logoWrapper.appendChild(cloneSvg);
+		} else {
+			// Standalone, self-contained SVG with YouTube play button + wordmark
+			const playIcon = document.createElement('div');
+			playIcon.innerHTML = `<svg viewBox="0 0 24 24" width="46" height="46" style="display:block;flex-shrink:0;"><path fill="#FF0000" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path fill="#FFFFFF" d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`;
+
+			const wordmark = document.createElement('span');
+			wordmark.className = 'lockedin-logo-text';
+			wordmark.textContent = 'YouTube';
+
+			logoWrapper.appendChild(playIcon.firstElementChild);
+			logoWrapper.appendChild(wordmark);
+		}
+
+		if (country) {
+			const countryBadge = document.createElement('span');
+			countryBadge.className = 'lockedin-country-code';
+			countryBadge.textContent = country;
+			logoWrapper.appendChild(countryBadge);
+		}
+
+		logoBox.appendChild(logoWrapper);
+		return topbarSvg !== null;
 	}
 
-	if (!setupLogo()) {
+	if (!renderLogo()) {
 		let retries = 0;
 		const retryTimer = setInterval(() => {
 			retries++;
-			if (setupLogo() || retries >= 8 || !document.getElementById(SEARCH_WIDGET_ID)) {
+			if (renderLogo() || retries >= 6 || !document.getElementById(SEARCH_WIDGET_ID)) {
 				clearInterval(retryTimer);
 			}
-		}, 250);
+		}, 300);
 	}
 
 	// Search form
