@@ -1334,21 +1334,13 @@ body {
 .birthday-cake-icon {
   width: 16px;
   height: 16px;
-  color: hsla(0, 0%, 100%, 0.7);
-  transform-origin: bottom center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: hsla(0, 0%, 100%, 0.6);
+  transition: color 0.2s ease;
   display: block;
 }
 
 .birthday-cake-container:hover .birthday-cake-icon {
-  animation: cakePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-@keyframes cakePop {
-  0% { transform: translateY(0) scale(1) rotate(0deg); }
-  35% { transform: translateY(-3px) scale(1.18) rotate(-5deg); }
-  70% { transform: translateY(-1.5px) scale(1.12) rotate(3deg); }
-  100% { transform: translateY(-2px) scale(1.15) rotate(0deg); }
+  color: #ffffff;
 }
 
 .birthday-tooltip {
@@ -1356,8 +1348,8 @@ body {
   bottom: calc(100% + 9px);
   left: 50%;
   transform: translateX(-50%) translateY(4px);
-  background: rgba(15, 23, 42, 0.96);
-  color: #f8fafc;
+  background: rgba(8, 9, 8, 0.98);
+  color: #ffffff;
   font-size: 11px;
   font-weight: 500;
   padding: 4px 9px;
@@ -1367,8 +1359,8 @@ body {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   z-index: 1000;
   letter-spacing: 0.1px;
 }
@@ -1381,7 +1373,7 @@ body {
   transform: translateX(-50%);
   border-width: 4px;
   border-style: solid;
-  border-color: rgba(15, 23, 42, 0.96) transparent transparent transparent;
+  border-color: rgba(8, 9, 8, 0.98) transparent transparent transparent;
 }
 
 .birthday-cake-container:hover .birthday-tooltip {
@@ -2021,15 +2013,19 @@ body {
   color: currentColor;
 }
 
+.popup-container.light-mode .birthday-cake-container:hover .birthday-cake-icon {
+  color: hsl(210, 25%, 15%);
+}
+
 .popup-container.light-mode .birthday-tooltip {
-  background: rgba(30, 41, 59, 0.96);
-  color: #ffffff;
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  background: hsl(210, 40%, 96%);
+  color: hsl(210, 22%, 20%);
+  border-color: hsla(210, 40%, 50%, 0.25);
+  box-shadow: 0 4px 14px hsla(210, 40%, 30%, 0.12);
 }
 
 .popup-container.light-mode .birthday-tooltip::after {
-  border-color: rgba(30, 41, 59, 0.96) transparent transparent transparent;
+  border-color: hsl(210, 40%, 96%) transparent transparent transparent;
 }
 
 .popup-container.light-mode .footer-link {
@@ -2195,9 +2191,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .settings-lock-overlay {
     transition: none;
-  }
-  .birthday-cake-container:hover .birthday-cake-icon {
-    animation: none;
-    transform: none;
   }
 }
