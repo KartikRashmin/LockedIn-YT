@@ -1342,15 +1342,14 @@ body {
 
 .birthday-cake-container:hover .birthday-cake-icon {
   color: #ff6b81;
-  animation: cakeWiggle 0.6s ease-in-out infinite alternate;
+  animation: cakePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-@keyframes cakeWiggle {
-  0% { transform: scale(1.2) rotate(0deg); }
-  25% { transform: scale(1.25) rotate(-10deg); }
-  50% { transform: scale(1.2) rotate(0deg); }
-  75% { transform: scale(1.25) rotate(10deg); }
-  100% { transform: scale(1.2) rotate(0deg); }
+@keyframes cakePop {
+  0% { transform: translateY(0) scale(1) rotate(0deg); }
+  35% { transform: translateY(-3px) scale(1.18) rotate(-5deg); }
+  70% { transform: translateY(-1.5px) scale(1.12) rotate(3deg); }
+  100% { transform: translateY(-2px) scale(1.15) rotate(0deg); }
 }
 
 .birthday-tooltip {
@@ -2197,5 +2196,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .settings-lock-overlay {
     transition: none;
+  }
+  .birthday-cake-container:hover .birthday-cake-icon {
+    animation: none;
+    transform: none;
   }
 }
