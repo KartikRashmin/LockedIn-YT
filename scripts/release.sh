@@ -35,7 +35,7 @@ MANIFEST="$ROOT_DIR/src/manifest.json"
 CHANGELOG="$ROOT_DIR/CHANGELOG.md"
 DIST_DIR="$ROOT_DIR/dist"
 
-REPO="KartikHalkunde/LockedIn-YT"
+REPO="KartikRashmin/LockedIn-YT"
 DEFAULT_BRANCH="main"
 
 SKIP_BUILD=false
@@ -536,13 +536,13 @@ log "Checking extension package contents..."
 
 for asset in "$FIREFOX_ZIP" "$CHROMIUM_ZIP" "$OPERA_ZIP"; do
 
-    unzip -l "$asset" | grep -q "manifest.json" \
+    unzip -l "$asset" | grep "manifest.json" >/dev/null \
         || die "$(basename "$asset") does not contain manifest.json."
 
-    unzip -l "$asset" | grep -q "background.js" \
+    unzip -l "$asset" | grep "background.js" >/dev/null \
         || die "$(basename "$asset") does not contain background.js."
 
-    unzip -l "$asset" | grep -q "popup/popup.html" \
+    unzip -l "$asset" | grep "popup/popup.html" >/dev/null \
         || die "$(basename "$asset") does not contain popup/popup.html."
 
     success "$(basename "$asset") structure looks valid."
@@ -674,14 +674,14 @@ out.append("")
 
 # Full changelog link.
 if previous_tag:
-    out.append(f"**Full Changelog**: https://github.com/KartikHalkunde/LockedIn-YT/compare/{previous_tag}...v{version}")
+    out.append(f"**Full Changelog**: https://github.com/KartikRashmin/LockedIn-YT/compare/{previous_tag}...v{version}")
     out.append("")
 
 # Issues.
 out.append("##  Found a problem?")
 out.append("")
 out.append(
-    "[Open an issue](https://github.com/KartikHalkunde/LockedIn-YT/issues)"
+    "[Open an issue](https://github.com/KartikRashmin/LockedIn-YT/issues)"
     " if something is not working correctly."
 )
 out.append("")
