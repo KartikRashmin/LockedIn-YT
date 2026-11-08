@@ -228,28 +228,27 @@ function redirectToSubscriptions(shouldRedirect) {
 	}
 }
 
-// ===== YOUTUBE SEARCH WIDGET (RELOCATION MODE) =====
+// ===== YOUTUBE SEARCH WIDGET (CSS-REPOSITION MODE) =====
 //
-// Instead of cloning the search bar, we physically MOVE the real
-// #center element (YouTube's search section) out of the masthead and
-// into a centered overlay. When the feed is re-shown we move it back.
+// We do NOT move #center in the DOM. Instead we use CSS position:fixed
+// to visually place it at screen-centre while it stays inside ytd-masthead.
+// This preserves ALL of YouTube's JS wiring — autocomplete suggestions,
+// voice-search, keyboard shortcuts — because the element's DOM context
+// is unchanged.
+//
+// Layout (all position:fixed, relative to viewport centre):
+//
+//   ┌──────────────────────────┐
+//   │  YouTube logo  (~40px)   │  top: calc(50% - 60px)
+//   │                          │
+//   │  [  Search bar  ] 🎤     │  centre: 50%  (via CSS on #center)
+//   │                          │
+//   │  Powered by LockedIn     │  top: calc(50% + 60px)
+//   └──────────────────────────┘
 
-// Module-level storage for relocated element references
-const _lockedinRelocation = {
-	el: null,          // the actual #center DOM node
-	parent: null,      // its original parent
-	nextSib: null,     // its original next-sibling (for exact re-insertion)
-	origStyle: '',     // its original inline style attribute value
-	retryTimer: null,  // interval id for retry if nav wasn't ready
-};
-
-// Selectors that identify the masthead search section
-const NAV_SEARCH_SELECTORS = [
-	'ytd-masthead #center',
-	'#masthead-container #center',
-	'#masthead #center',
-	'#center.ytd-masthead',
-];
+const WIDGET_ID   = 'lockedin-feed-placeholder';
+const CSS_REPOS_ID = 'lockedin-center-reposition'; // <style> for #center CSS
+const CSS_WIDGET_ID = 'lockedin-search-widget-styles'; // <style> for slot tweaks
 
 // Selectors for the logo in the top-left of the nav
 const NAV_LOGO_SELECTORS = [
@@ -260,85 +259,13 @@ const NAV_LOGO_SELECTORS = [
 	'#logo-icon-container',
 ];
 
-function findNavSearchEl() {
-	for (const sel of NAV_SEARCH_SELECTORS) {
-		const el = document.querySelector(sel);
-		if (el) return el;
-	}
-	return null;
-}
-
-// Move the real #center search element into targetContainer.
-// Returns true if successful, false if the element wasn't found yet.
-function relocateNavSearch(targetContainer) {
-	if (_lockedinRelocation.el) return true; // already relocated
-
-	const center = findNavSearchEl();
-	if (!center) return false;
-
-	// Store original position
-	_lockedinRelocation.el = center;
-	_lockedinRelocation.parent = center.parentNode;
-	_lockedinRelocation.nextSib = center.nextSibling;
-	_lockedinRelocation.origStyle = center.getAttribute('style') || '';
-
-	// Strip masthead-context flex constraints so the element
-	// renders as a standalone block inside our centered panel.
-	center.style.setProperty('position', 'static', 'important');
-	center.style.setProperty('display', 'flex', 'important');
-	center.style.setProperty('flex', 'none', 'important');
-	center.style.setProperty('min-width', '0', 'important');
-	center.style.setProperty('max-width', '100%', 'important');
-	center.style.setProperty('width', '100%', 'important');
-	center.style.setProperty('margin', '0', 'important');
-	center.style.setProperty('padding', '0', 'important');
-	center.style.setProperty('align-items', 'center', 'important');
-
-	targetContainer.appendChild(center);
-	return true;
-}
-
-// Put the #center element back exactly where it was in the masthead.
-function restoreNavSearch() {
-	const ref = _lockedinRelocation;
-	if (!ref.el || !ref.parent) return;
-
-	// Clear the retry timer if it's still running
-	if (ref.retryTimer) {
-		clearInterval(ref.retryTimer);
-		ref.retryTimer = null;
-	}
-
-	// Restore original inline style
-	if (ref.origStyle) {
-		ref.el.setAttribute('style', ref.origStyle);
-	} else {
-		ref.el.removeAttribute('style');
-	}
-
-	// Re-insert at original position
-	if (ref.nextSib && ref.nextSib.parentNode === ref.parent) {
-		ref.parent.insertBefore(ref.el, ref.nextSib);
-	} else {
-		ref.parent.appendChild(ref.el);
-	}
-
-	// Clear stored references
-	ref.el = null;
-	ref.parent = null;
-	ref.nextSib = null;
-	ref.origStyle = '';
-}
-
-// Clone the logo from the nav bar (we clone, not move, so the nav
-// still has its logo while the feed-hidden page is showing).
+// Clone the visible nav logo (we clone, not move, so the nav keeps its logo)
 function cloneNavLogo() {
 	for (const sel of NAV_LOGO_SELECTORS) {
 		const el = document.querySelector(sel);
 		if (!el) continue;
 		try {
 			const clone = el.cloneNode(true);
-			// Strip links / interactivity from clone
 			clone.querySelectorAll('a').forEach(a => {
 				a.removeAttribute('href');
 				a.style.cursor = 'default';
@@ -351,53 +278,101 @@ function cloneNavLogo() {
 	return null;
 }
 
-// Build the centered overlay. The search slot inside it will be
-// populated separately by relocateNavSearch().
+// Inject (or update) the <style> that CSS-repositions #center to screen-centre.
+// The search bar's midpoint sits at exactly 50% of the viewport height.
+// Logo is 60px above that; "Powered by" is 60px below.
+function injectRepositionCSS() {
+	let style = document.getElementById(CSS_REPOS_ID);
+	if (!style) {
+		style = document.createElement('style');
+		style.id = CSS_REPOS_ID;
+		(document.head || document.documentElement).appendChild(style);
+	}
+	style.textContent = `
+		/* ===== LockedIn: reposition search bar to viewport centre ===== */
+
+		/* Pull #center out of the masthead flow and fix it at screen-centre */
+		ytd-masthead #center,
+		#masthead-container #center,
+		#masthead #center {
+			position: fixed !important;
+			top:  50% !important;
+			left: 50% !important;
+			transform: translate(-50%, -50%) !important;
+			width:     min(580px, 90vw) !important;
+			max-width: 90vw !important;
+			min-width: 0    !important;
+			margin:    0    !important;
+			padding:   0    !important;
+			flex:      none !important;
+			z-index:   2001 !important;
+			display:   flex !important;
+			align-items: center !important;
+		}
+
+		/* Make the searchbox inside fill the available width */
+		ytd-masthead #center ytd-searchbox,
+		#masthead #center ytd-searchbox,
+		ytd-masthead #center #search-container,
+		ytd-masthead #center #search-form {
+			width:     100% !important;
+			max-width: 100% !important;
+			flex:      1    !important;
+		}
+
+		/* Keep the autocomplete suggestion dropdown visible & above overlay */
+		ytd-masthead #center ytd-searchbox #suggestions-popup,
+		ytd-masthead #center ytd-searchbox tp-yt-iron-dropdown,
+		ytd-masthead #center [slot="suggestions"] {
+			z-index: 2002 !important;
+		}
+	`;
+}
+
+function removeRepositionCSS() {
+	const s = document.getElementById(CSS_REPOS_ID);
+	if (s) s.remove();
+}
+
+// Build the overlay that shows the logo and "Powered by LockedIn".
+// #center is NOT inside this overlay — it is CSS-repositioned separately.
 function createSearchWidget() {
 	const isDark = isYouTubeDarkMode();
 
-	// Full-screen transparent overlay
+	// Full-screen transparent backdrop (pointer-events:none so clicks pass through)
 	const wrapper = document.createElement('div');
-	wrapper.id = 'lockedin-feed-placeholder';
+	wrapper.id = WIDGET_ID;
 	wrapper.style.cssText = `
 		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
+		inset: 0;
+		pointer-events: none;
+		z-index: 2000;
+		background: transparent;
+	`;
+
+	// --- Logo (position:fixed, 60px above search-bar centre) ---
+	const logoWrap = document.createElement('div');
+	logoWrap.style.cssText = `
+		position: fixed;
+		top:  calc(50% - 60px);
+		left: 50%;
+		transform: translate(-50%, -50%);
+		pointer-events: none;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		z-index: 1000;
-		background: transparent;
-		pointer-events: none;
 	`;
-
-	// Inner content panel
-	const panel = document.createElement('div');
-	panel.style.cssText = `
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 20px;
-		pointer-events: auto;
-		width: min(600px, 90vw);
-	`;
-
-	// --- Logo ---
-	const logoContainer = document.createElement('div');
-	logoContainer.style.cssText = 'display: flex; align-items: center; pointer-events: none;';
 
 	const logoClone = cloneNavLogo();
 	if (logoClone) {
-		// Scale the nav logo up to ~2× — it's about 18-20px tall in the nav,
-		// we want it at ~36-40px for the Google-search-page look.
+		// Scale the nav logo up — it is ~18-20 px tall in the bar, we want ~38 px
 		const scaleWrap = document.createElement('div');
 		scaleWrap.style.cssText = `
 			transform: scale(2);
-			transform-origin: left center;
+			transform-origin: center center;
 			pointer-events: none;
+			display: flex;
+			align-items: center;
 		`;
 		scaleWrap.appendChild(logoClone);
 
@@ -406,22 +381,23 @@ function createSearchWidget() {
 		logoOuter.style.cssText = `
 			display: flex;
 			align-items: center;
+			justify-content: center;
 			height: 40px;
 			min-width: 180px;
-			overflow: visible;
 		`;
 		logoOuter.appendChild(scaleWrap);
-		logoContainer.appendChild(logoOuter);
+		logoWrap.appendChild(logoOuter);
 	} else {
 		// Fallback inline SVG (play button + wordmark)
-		logoContainer.innerHTML = `
+		logoWrap.innerHTML = `
 			<svg viewBox="0 0 203 46" width="203" height="46"
 			     xmlns="http://www.w3.org/2000/svg" aria-label="YouTube">
 				<path d="M64.14 8.19A8.08 8.08 0 0 0 58.49 2.5C53.37 1.1 32.86 1.1 32.86 1.1
 				         S12.35 1.1 7.23 2.5a8.08 8.08 0 0 0-5.65 5.69C.17 13.37.17 23 .17 23
-				         s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69c5.12 1.4 25.63 1.4 25.63 1.4
-				         s20.51 0 25.63-1.4a8.08 8.08 0 0 0 5.65-5.69
-				         C65.55 32.63 65.55 23 65.55 23s0-9.63-1.41-14.81z" fill="#FF0000"/>
+				         s0 9.63 1.41 14.81a8.08 8.08 0 0 0 5.65 5.69
+				         c5.12 1.4 25.63 1.4 25.63 1.4s20.51 0 25.63-1.4
+				         a8.08 8.08 0 0 0 5.65-5.69C65.55 32.63 65.55 23 65.55 23
+				         s0-9.63-1.41-14.81z" fill="#FF0000"/>
 				<path d="M26.44 32.86L43.14 23 26.44 13.14v19.72z" fill="#fff"/>
 				<text x="74" y="34"
 				      font-family="'YouTube Noto',Roboto,Arial,sans-serif"
@@ -430,104 +406,110 @@ function createSearchWidget() {
 			</svg>`;
 	}
 
-	// --- Search slot: the real #center will be moved here ---
-	const searchSlot = document.createElement('div');
-	searchSlot.id = 'lockedin-search-slot';
-	searchSlot.style.cssText = `
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	`;
-
-	// --- CSS to fix #center appearance outside the masthead context ---
-	let widgetStyle = document.getElementById('lockedin-search-widget-styles');
-	if (!widgetStyle) {
-		widgetStyle = document.createElement('style');
-		widgetStyle.id = 'lockedin-search-widget-styles';
-		(document.head || document.documentElement).appendChild(widgetStyle);
-	}
-	widgetStyle.textContent = `
-		/* Make the relocated #center fill its new slot naturally */
-		#lockedin-search-slot #center,
-		#lockedin-search-slot #center.ytd-masthead {
-			width: 100% !important;
-			max-width: 100% !important;
-			min-width: 0 !important;
-			flex: 1 1 auto !important;
-			display: flex !important;
-			align-items: center !important;
-			margin: 0 !important;
-			padding: 0 !important;
-		}
-		/* Make sure the searchbox inside fills width */
-		#lockedin-search-slot ytd-searchbox,
-		#lockedin-search-slot #search-container,
-		#lockedin-search-slot #search-form {
-			width: 100% !important;
-			max-width: 100% !important;
-		}
-	`;
-
-	// --- "Powered by LockedIn" label ---
+	// --- "Powered by LockedIn" label (60px below search-bar centre) ---
 	const poweredBy = document.createElement('div');
 	poweredBy.textContent = 'Powered by LockedIn';
 	poweredBy.style.cssText = `
+		position: fixed;
+		top:  calc(50% + 60px);
+		left: 50%;
+		transform: translateX(-50%);
 		font-family: Roboto, Arial, sans-serif;
 		font-size: 12px;
 		color: ${isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
 		user-select: none;
+		pointer-events: none;
+		white-space: nowrap;
 	`;
 
-	panel.appendChild(logoContainer);
-	panel.appendChild(searchSlot);
-	panel.appendChild(poweredBy);
-	wrapper.appendChild(panel);
+	wrapper.appendChild(logoWrap);
+	wrapper.appendChild(poweredBy);
 
 	return wrapper;
 }
 
-function hideFeed(shouldHide) {
-	const placeholderId = 'lockedin-feed-placeholder';
+// Teardown: remove overlay + reposition CSS.
+// Called on restore OR on any navigation away from home.
+function teardownSearchWidget() {
+	const placeholder = document.getElementById(WIDGET_ID);
+	if (placeholder) placeholder.remove();
+	removeRepositionCSS();
+	// Also remove any old search-widget-styles if present
+	const old = document.getElementById(CSS_WIDGET_ID);
+	if (old) old.remove();
+}
 
+// One-time navigation listener — tears down widget the moment the user
+// navigates away (e.g. submits a search) so it never overlaps search results.
+let _navListenerAttached = false;
+function ensureNavTeardownListener() {
+	if (_navListenerAttached) return;
+	_navListenerAttached = true;
+
+	function onNavigate() {
+		// Tear down immediately if we just left the homepage
+		if (!isHomePath()) {
+			teardownSearchWidget();
+		}
+	}
+
+	// yt-navigate-start fires as soon as navigation begins (before content changes)
+	window.addEventListener('yt-navigate-start',  onNavigate, true);
+	window.addEventListener('yt-navigate-finish', onNavigate, true);
+}
+
+// Logo-clone retry: if ytd-logo wasn't in DOM when widget was first created,
+// swap the fallback SVG for the real clone once it appears.
+let _logoRetryTimer = null;
+function scheduleLogoRetry() {
+	if (_logoRetryTimer) return;
+	let attempts = 0;
+	_logoRetryTimer = setInterval(() => {
+		attempts++;
+		const clone = cloneNavLogo();
+		const wrapper = document.getElementById(WIDGET_ID);
+		if (!wrapper || attempts >= 20) {
+			clearInterval(_logoRetryTimer);
+			_logoRetryTimer = null;
+			return;
+		}
+		if (clone) {
+			// Real logo is now available — rebuild the logo section
+			clearInterval(_logoRetryTimer);
+			_logoRetryTimer = null;
+			// Re-create widget with real logo
+			teardownSearchWidget();
+			hideFeed(true);
+		}
+	}, 250);
+}
+
+function hideFeed(shouldHide) {
 	if (!shouldHide) {
 		// Restore feed elements
-		const feedElements = [
+		[
 			document.querySelector('ytd-rich-grid-renderer'),
 			document.querySelector('ytd-two-column-browse-results-renderer'),
 			...document.querySelectorAll('[data-lockedin-hidden="feed"]')
-		].filter(el => el);
-
-		feedElements.forEach(el => {
+		].filter(Boolean).forEach(el => {
 			el.style.removeProperty('display');
 			el.removeAttribute('data-lockedin-hidden');
 		});
 
-		// Move #center back to the masthead
-		restoreNavSearch();
-
-		// Remove the overlay widget
-		const placeholder = document.getElementById(placeholderId);
-		if (placeholder) placeholder.remove();
-
-		// Remove widget styles
-		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
-		if (widgetStyles) widgetStyles.remove();
+		teardownSearchWidget();
 		return;
 	}
 
-	if (window.location.pathname === '/' || window.location.pathname === '/home') {
-		// Hide the feed content
-		const feedSelectors = [
+	if (isHomePath()) {
+		// Hide feed content
+		[
 			'ytd-rich-grid-renderer',
 			'ytd-two-column-browse-results-renderer #primary',
 			'ytd-browse[page-subtype="home"]',
 			'ytm-browse',
 			'ytm-rich-grid-renderer',
-			'ytm-feed'
-		];
-
-		feedSelectors.forEach(selector => {
+			'ytm-feed',
+		].forEach(selector => {
 			document.querySelectorAll(selector).forEach(el => {
 				if (!el.hasAttribute('data-lockedin-hidden')) {
 					el.style.setProperty('display', 'none', 'important');
@@ -538,48 +520,30 @@ function hideFeed(shouldHide) {
 
 		// If the user turned off the search widget, just hide the feed — no overlay
 		if (latestSyncedSettings.showFeedSearchWidget === false) {
-			const existing = document.getElementById(placeholderId);
-			if (existing) existing.remove();
-			const widgetStyles = document.getElementById('lockedin-search-widget-styles');
-			if (widgetStyles) widgetStyles.remove();
-			// Restore nav search if we previously relocated it
-			restoreNavSearch();
+			teardownSearchWidget();
 			return;
 		}
 
-		// Create the overlay widget if not already present
-		if (!document.getElementById(placeholderId)) {
+		// Inject the CSS that visually moves #center to screen-centre
+		injectRepositionCSS();
+
+		// Create the logo + "Powered by" overlay if not already present
+		if (!document.getElementById(WIDGET_ID)) {
 			const widget = createSearchWidget();
 			document.body.appendChild(widget);
-			console.log('LockedIn: Search widget injected');
+			console.log('LockedIn: Search widget shown');
+
+			// If logo clone fell back to SVG, retry once ytd-logo is available
+			const hasRealLogo = !!document.querySelector(NAV_LOGO_SELECTORS[0]);
+			if (!hasRealLogo) scheduleLogoRetry();
 		}
 
-		// Try to relocate the real #center into the search slot
-		const slot = document.getElementById('lockedin-search-slot');
-		if (slot && !_lockedinRelocation.el) {
-			if (!relocateNavSearch(slot)) {
-				// Nav not ready yet — retry every 300ms for up to 4.5 s
-				if (!_lockedinRelocation.retryTimer) {
-					let retries = 0;
-					_lockedinRelocation.retryTimer = setInterval(() => {
-						retries++;
-						const s = document.getElementById('lockedin-search-slot');
-						if (relocateNavSearch(s) || retries >= 15) {
-							clearInterval(_lockedinRelocation.retryTimer);
-							_lockedinRelocation.retryTimer = null;
-						}
-					}, 300);
-				}
-			}
-		}
+		// Attach the navigation listener that tears down widget on page change
+		ensureNavTeardownListener();
 
 	} else {
-		// Not on homepage: remove widget and restore nav
-		const placeholder = document.getElementById(placeholderId);
-		if (placeholder) placeholder.remove();
-		const widgetStyles = document.getElementById('lockedin-search-widget-styles');
-		if (widgetStyles) widgetStyles.remove();
-		restoreNavSearch();
+		// Not on homepage — remove everything immediately
+		teardownSearchWidget();
 	}
 }
 
