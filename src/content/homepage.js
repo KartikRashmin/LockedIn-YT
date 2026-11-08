@@ -185,13 +185,25 @@ function injectSearchWidgetCSS() {
 	}
 
 	const hideNavSearchRule = (latestSyncedSettings.showFeedSearchWidget !== false) ? `
-		/* Hide search section in the top navbar on homepage so there is only one search option */
-		#masthead #center,
-		#center.ytd-masthead,
-		ytd-masthead #center,
+		/* Hide searchbox in the top navbar on homepage so there is only one search bar */
+		ytd-masthead ytd-searchbox,
+		#masthead #center ytd-searchbox,
 		ytd-searchbox,
 		ytm-mobile-topbar-renderer .header-search-box {
 			display: none !important;
+		}
+
+		/* Visually hide the native navbar voice search button while preserving its layout presence for click delegation */
+		ytd-masthead #voice-search-button,
+		#masthead #voice-search-button,
+		ytd-masthead [aria-label*="Search with your voice" i] {
+			opacity: 0 !important;
+			pointer-events: none !important;
+			position: absolute !important;
+			width: 1px !important;
+			height: 1px !important;
+			overflow: hidden !important;
+			clip: rect(0, 0, 0, 0) !important;
 		}
 	` : '';
 
@@ -401,6 +413,23 @@ function injectSearchWidgetCSS() {
 
 		.lockedin-voice-btn:active {
 			transform: scale(0.95);
+		}
+
+		.lockedin-voice-btn.listening {
+			background: #ff0033 !important;
+			color: #ffffff !important;
+			animation: lockedinVoicePulse 1.2s infinite ease-in-out;
+		}
+
+		@keyframes lockedinVoicePulse {
+			0%, 100% {
+				transform: scale(1);
+				box-shadow: 0 0 0 0 rgba(255, 0, 51, 0.6);
+			}
+			50% {
+				transform: scale(1.08);
+				box-shadow: 0 0 14px 4px rgba(255, 0, 51, 0.4);
+			}
 		}
 
 		.lockedin-suggestions-box {
@@ -815,57 +844,123 @@ function buildSearchWidget() {
 	document.addEventListener('click', outsideClickListener);
 
 	// Voice search
-	voiceBtn.addEventListener('click', () => {
-		// 1. Try native YouTube voice search dialog
-		const nativeVoice = document.querySelector('ytd-masthead #voice-search-button button, #voice-search-button button, ytd-masthead #voice-search-button');
-		if (nativeVoice) {
-			nativeVoice.click();
-			return;
+	function triggerNativeVoiceSearch() {
+		const selectors = [
+			'ytd-masthead #voice-search-button button',
+			'#voice-search-button button',
+			'button[aria-label="Search with your voice"]',
+			'button[aria-label*="Search with your voice" i]',
+			'button[aria-label*="voice" i]',
+			'ytd-masthead #voice-search-button [role="button"]',
+			'#voice-search-button [role="button"]',
+			'ytd-masthead #voice-search-button yt-icon-button',
+			'#voice-search-button yt-icon-button',
+			'ytd-masthead #voice-search-button ytd-button-renderer',
+			'#voice-search-button ytd-button-renderer',
+			'#voice-search-button'
+		];
+
+		for (const sel of selectors) {
+			const el = document.querySelector(sel);
+			if (el) {
+				try {
+					el.click();
+					el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true, view: window }));
+					el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, composed: true, view: window }));
+					el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
+					return true;
+				} catch (e) {
+					console.warn('LockedIn: Failed clicking native voice button', e);
+				}
+			}
 		}
 
-		// 2. Fallback to Web Speech API
+		try {
+			const masthead = document.querySelector('ytd-masthead');
+			if (masthead && masthead.shadowRoot) {
+				for (const sel of selectors) {
+					const el = masthead.shadowRoot.querySelector(sel);
+					if (el) {
+						el.click();
+						el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true, view: window }));
+						return true;
+					}
+				}
+			}
+		} catch (e) {}
+
+		return false;
+	}
+
+	function startWebSpeech() {
 		const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 		if (!SpeechRecognition) {
 			searchInput.focus();
 			return;
 		}
 
-		const recognition = new SpeechRecognition();
-		recognition.lang = navigator.language || 'en-US';
-		recognition.interimResults = false;
-		recognition.maxAlternatives = 1;
-
-		const originalPlaceholder = searchInput.placeholder;
-		searchInput.placeholder = 'Listening…';
-		searchInput.disabled = true;
-
-		recognition.onresult = (event) => {
-			const transcript = event.results?.[0]?.[0]?.transcript;
-			searchInput.disabled = false;
-			searchInput.placeholder = originalPlaceholder;
-			if (transcript && transcript.trim()) {
-				searchInput.value = transcript.trim();
-				executeSearch(transcript.trim());
-			}
-		};
-
-		recognition.onerror = () => {
-			searchInput.disabled = false;
-			searchInput.placeholder = originalPlaceholder;
-			searchInput.focus();
-		};
-
-		recognition.onend = () => {
-			searchInput.disabled = false;
-			searchInput.placeholder = originalPlaceholder;
-		};
-
 		try {
+			const recognition = new SpeechRecognition();
+			recognition.lang = navigator.language || 'en-US';
+			recognition.interimResults = false;
+			recognition.maxAlternatives = 1;
+
+			const originalPlaceholder = searchInput.placeholder;
+			searchInput.placeholder = 'Listening…';
+			voiceBtn.classList.add('listening');
+
+			const stopListening = () => {
+				voiceBtn.classList.remove('listening');
+				searchInput.placeholder = originalPlaceholder;
+			};
+
+			recognition.onresult = (event) => {
+				stopListening();
+				const transcript = event.results?.[0]?.[0]?.transcript;
+				if (transcript && transcript.trim()) {
+					searchInput.value = transcript.trim();
+					executeSearch(transcript.trim());
+				}
+			};
+
+			recognition.onerror = (err) => {
+				console.warn('LockedIn: Web Speech error', err);
+				stopListening();
+				searchInput.focus();
+			};
+
+			recognition.onend = () => {
+				stopListening();
+			};
+
 			recognition.start();
 		} catch (e) {
-			searchInput.disabled = false;
-			searchInput.placeholder = originalPlaceholder;
+			console.warn('LockedIn: Speech recognition could not start', e);
+			voiceBtn.classList.remove('listening');
+			searchInput.focus();
 		}
+	}
+
+	voiceBtn.addEventListener('click', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		closeSuggestions();
+
+		const triggered = triggerNativeVoiceSearch();
+
+		if (!triggered) {
+			startWebSpeech();
+			return;
+		}
+
+		// Verify whether YouTube's native voice dialog opened; if not, fall back to Web Speech
+		setTimeout(() => {
+			const dialog = document.querySelector('ytd-voice-search-dialog-renderer');
+			const isVisible = dialog && dialog.offsetParent !== null && dialog.getAttribute('aria-hidden') !== 'true';
+			if (!isVisible) {
+				startWebSpeech();
+			}
+		}, 250);
 	});
 
 	// Shortcut hint label
