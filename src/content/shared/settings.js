@@ -127,7 +127,7 @@ const DEFAULT_SETTINGS = {
 	hideMoreFromYT: false,
 	hidePlaylists: false,
 	hideSubscriptions: false,
-	hideFeedQuote: false,
+	showFeedSearchWidget: true,
 	extensionEnabled: true
 };
 

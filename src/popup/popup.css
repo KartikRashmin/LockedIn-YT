@@ -1306,13 +1306,80 @@ body {
   font-family: inherit;
 }
 
-.version {
+.footer-version-group {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.version {
   text-align: center;
   font-size: 13px;
   color: hsla(0, 0%, 100%, 0.6);
   font-weight: 600;
   padding: 0;
+}
+
+.birthday-cake-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.birthday-cake-icon {
+  width: 16px;
+  height: 16px;
+  color: hsla(0, 0%, 100%, 0.6);
+  transition: color 0.2s ease;
+  display: block;
+}
+
+.birthday-cake-container:hover .birthday-cake-icon {
+  color: #ffffff;
+}
+
+.birthday-tooltip {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(8, 9, 8, 0.98);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  z-index: 1000;
+  letter-spacing: 0.1px;
+}
+
+.birthday-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: rgba(8, 9, 8, 0.98) transparent transparent transparent;
+}
+
+.birthday-cake-container:hover .birthday-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ===== FEEDBACK PAGE ===== */
@@ -1940,6 +2007,25 @@ body {
 
 .popup-container.light-mode .version {
   color: currentColor;
+}
+
+.popup-container.light-mode .birthday-cake-icon {
+  color: currentColor;
+}
+
+.popup-container.light-mode .birthday-cake-container:hover .birthday-cake-icon {
+  color: hsl(210, 25%, 15%);
+}
+
+.popup-container.light-mode .birthday-tooltip {
+  background: hsl(210, 40%, 96%);
+  color: hsl(210, 22%, 20%);
+  border-color: hsla(210, 40%, 50%, 0.25);
+  box-shadow: 0 4px 14px hsla(210, 40%, 30%, 0.12);
+}
+
+.popup-container.light-mode .birthday-tooltip::after {
+  border-color: hsl(210, 40%, 96%) transparent transparent transparent;
 }
 
 .popup-container.light-mode .footer-link {
