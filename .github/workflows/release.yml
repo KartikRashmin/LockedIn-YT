@@ -72,6 +72,10 @@ jobs:
             test "$archive_version" = "$version"
           done
 
+      - name: Run Mozilla Add-ons linter on Firefox package
+        run: |
+          npx --yes addons-linter "dist/lockedin-v${GITHUB_REF_NAME#v}-firefox.zip" --output=text
+
       - name: Generate SHA256 checksums
         run: |
           cd dist
