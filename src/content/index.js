@@ -170,6 +170,37 @@ html[data-lockedin-hide-shorts-tab="true"] ytm-pivot-bar-item-renderer:has([href
 html[data-lockedin-hide-shorts-tab="true"] ytm-pivot-bar-item-renderer:has([data-pivot-id="shorts"]) {
   display: none !important;
 }
+
+html[data-lockedin-hide-notifications="true"] ytd-notification-topbar-button-renderer,
+html[data-lockedin-hide-notifications="true"] #notification-button,
+html[data-lockedin-hide-notifications="true"] ytm-notification-topbar-button-renderer,
+html[data-lockedin-hide-notifications="true"] ytm-pivot-bar-item-renderer:has(a[href*="/notifications"]),
+html[data-lockedin-hide-notifications="true"] ytm-pivot-bar-item-renderer:has([data-pivot-id="notifications"]),
+html[data-lockedin-hide-notifications="true"] ytd-topbar-menu-button-renderer:has([aria-label*="Notifications" i]) {
+  display: none !important;
+}
+
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(a[href*="studio.youtube.com"]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(a[href*="/upload"]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(a[href*="/create"]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(button[aria-label*="Create" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(yt-icon-button[aria-label*="Create" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="Create" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="Créer" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="Crear" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="Criar" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="Erstellen" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="बनाएं" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="创建" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has([aria-label*="建立" i]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(path[d*="M14 13"]),
+html[data-lockedin-hide-create="true"] ytd-masthead #buttons ytd-button-renderer:has(path[d*="M19 13"]),
+html[data-lockedin-hide-create="true"] ytm-pivot-bar-item-renderer:has([data-pivot-id="create"]),
+html[data-lockedin-hide-create="true"] ytm-pivot-bar-item-renderer:has([aria-label*="Create" i]),
+html[data-lockedin-hide-create="true"] ytm-pivot-bar-item-renderer:has(a[href*="/upload"]),
+html[data-lockedin-hide-create="true"] ytm-pivot-bar-item-renderer:has(a[href*="studio.youtube.com"]) {
+  display: none !important;
+}
 `;
 (document.head || document.documentElement).appendChild(navHideStyle);
 
@@ -474,6 +505,7 @@ storageGet('sync', null).then((settings) => {
     latestSyncedSettings = { ...DEFAULT_SETTINGS, ...settings };
   }
   updateGuideVisibility();
+  updateNavBarVisibility();
 }).catch(() => {
   console.error('LockedIn: Failed to check settings');
 });
@@ -495,7 +527,9 @@ function runAll() {
     const currentSettings = { ...DEFAULT_SETTINGS, ...settings };
     latestSyncedSettings = currentSettings;
     observeGuideContainers();
+    observeNavBarContainers();
     updateGuideVisibility();
+    updateNavBarVisibility();
     startTranscriptObserver();
     
     // Check if extension is enabled
@@ -596,6 +630,7 @@ function runAll() {
     }
     
     updateGuideVisibility();
+    updateNavBarVisibility();
     ensureEssentialElementsVisible();
   }).catch((error) => {
     console.error('LockedIn: Failed to load settings', error);
@@ -604,7 +639,9 @@ function runAll() {
     latestSyncedSettings = currentSettings;
     setInstantHiding(currentSettings.hideShortsHomepage, currentSettings.hideShortsSearch, currentSettings.hideShortsGlobally);
     observeGuideContainers();
+    observeNavBarContainers();
     updateGuideVisibility();
+    updateNavBarVisibility();
     
     redirectShorts(currentSettings.redirectShorts);
     setupShortsLinkInterception(currentSettings.redirectShorts);
@@ -699,6 +736,7 @@ function restoreAllElements() {
   hideMoreFromYT(false);
   hideSubscriptions(false);
   updateGuideVisibility();
+  updateNavBarVisibility();
 }
 
 // ensureEssentialElementsVisible moved to content/search.js
@@ -714,12 +752,14 @@ if (isExtensionContextValid()) {
       setInstantRecsHiding(currentSettings.hideRecommended, currentSettings.hideSidebar, currentSettings.hideEndCards);
     }
     updateGuideVisibility();
+    updateNavBarVisibility();
   }).catch(() => {
     // Use defaults if storage fails or context is invalidated
     latestSyncedSettings = { ...DEFAULT_SETTINGS };
     setInstantHiding(DEFAULT_SETTINGS.hideShortsHomepage, DEFAULT_SETTINGS.hideShortsSearch, DEFAULT_SETTINGS.hideShortsGlobally);
     setInstantRecsHiding(DEFAULT_SETTINGS.hideRecommended, DEFAULT_SETTINGS.hideSidebar, DEFAULT_SETTINGS.hideEndCards);
     updateGuideVisibility();
+    updateNavBarVisibility();
   });
 }
 
@@ -774,6 +814,7 @@ function attachSpaEventListeners() {
 
 attachSpaEventListeners();
 observeGuideContainers();
+observeNavBarContainers();
 
 function forceSidebarRehide() {
   if (latestSyncedSettings.extensionEnabled === false) return;
@@ -892,6 +933,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     }
     updateGuideVisibility();
+    updateNavBarVisibility();
     runAll();
   } else if (message.action === 'customMemesUpdated') {
     // Re-apply hideFeed to update the displayed meme

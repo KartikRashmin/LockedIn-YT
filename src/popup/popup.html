@@ -506,6 +506,43 @@
             </div>
           </div>
         </div>
+
+        <div class="settings-group" data-group="navbar">
+          <div class="group-header" role="group">
+            <button class="group-chevron" type="button" aria-expanded="true" aria-label="Toggle YouTube Navigation Bar section">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 6 15 12 9 18"></polyline>
+              </svg>
+            </button>
+            <span class="group-title" data-i18n-key="group.navbar">YouTube Navigation Bar</span>
+          </div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <span class="setting-label" data-i18n-key="setting.cleanNavBar">Clean Navigation Bar</span>
+              <label class="toggle-switch">
+                <input type="checkbox" data-setting="cleanNavBar">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="sub-toggles-container" id="cleanNavSubToggles">
+              <div class="sub-toggles-line"></div>
+              <div class="sub-toggle-row" id="hideNotificationBellRow">
+                <span class="setting-label" data-i18n-key="setting.hideNotificationBell">Hide Notification Bell</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" data-setting="hideNotificationBell">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="sub-toggle-row" id="hideCreateButtonRow">
+                <span class="setting-label" data-i18n-key="setting.hideCreateButton">Hide Create Button</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" data-setting="hideCreateButton">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
