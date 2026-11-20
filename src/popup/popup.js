@@ -17,6 +17,9 @@ const DEFAULT_SETTINGS = {
   hideMembersOnly: false,
   hidePlayables: false,
   cleanSidebar: false,
+  cleanNavBar: false,
+  hideNotificationBell: false,
+  hideCreateButton: false,
   hideShortsGlobally: false,
   redirectShorts: false,
   hideVideoThumbnails: false,
@@ -175,6 +178,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'YouTube Sidebar',
     'setting.hideExplore': 'Hide Explore & Trending',
     'setting.hideMoreFromYT': 'Hide More From YouTube',
+    'group.navbar': 'YouTube Navigation Bar',
+    'setting.cleanNavBar': 'Clean Navigation Bar',
+    'setting.hideNotificationBell': 'Hide Notification Bell',
+    'setting.hideCreateButton': 'Hide Create Button',
     'state.lockedinOff': 'LockedIn is off',
     'state.breakTimerPrefix': 'See you in',
     'sponsor.title': 'Support LockedIn',
@@ -277,6 +284,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'Barra lateral de YouTube',
     'setting.hideExplore': 'Ocultar Explorar y Tendencias',
     'setting.hideMoreFromYT': 'Ocultar Más de YouTube',
+    'group.navbar': 'Barra de navegación de YouTube',
+    'setting.cleanNavBar': 'Limpiar barra de navegación',
+    'setting.hideNotificationBell': 'Ocultar campana de notificaciones',
+    'setting.hideCreateButton': 'Ocultar botón de crear',
     'state.lockedinOff': 'LockedIn está desactivado',
     'state.breakTimerPrefix': 'Te veo en',
     'sponsor.title': 'Apoya LockedIn',
@@ -379,6 +390,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'YouTube साइडबार',
     'setting.hideExplore': 'एक्सप्लोर और ट्रेंडिंग छुपाएँ',
     'setting.hideMoreFromYT': 'More From YouTube छुपाएँ',
+    'group.navbar': 'यूट्यूब नेविगेशन बार',
+    'setting.cleanNavBar': 'नेविगेशन बार साफ़ करें',
+    'setting.hideNotificationBell': 'सूचना घंटी छुपाएँ',
+    'setting.hideCreateButton': 'बनाएँ (Create) बटन छुपाएँ',
     'state.lockedinOff': 'LockedIn बंद है',
     'state.breakTimerPrefix': 'मिलते हैं',
     'sponsor.title': 'LockedIn को सपोर्ट करें',
@@ -481,6 +496,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'Barra lateral do YouTube',
     'setting.hideExplore': 'Ocultar Explorar e Em alta',
     'setting.hideMoreFromYT': 'Ocultar Mais do YouTube',
+    'group.navbar': 'Barra de navegação do YouTube',
+    'setting.cleanNavBar': 'Limpar barra de navegação',
+    'setting.hideNotificationBell': 'Ocultar sino de notificações',
+    'setting.hideCreateButton': 'Ocultar botão de criar',
     'state.lockedinOff': 'LockedIn está desativado',
     'state.breakTimerPrefix': 'Vejo você em',
     'sponsor.title': 'Apoie o LockedIn',
@@ -583,6 +602,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'Barre latérale YouTube',
     'setting.hideExplore': 'Masquer Explorer et Tendances',
     'setting.hideMoreFromYT': 'Masquer Plus de YouTube',
+    'group.navbar': 'Barre de navigation YouTube',
+    'setting.cleanNavBar': 'Nettoyer la barre de navigation',
+    'setting.hideNotificationBell': 'Masquer la cloche de notifications',
+    'setting.hideCreateButton': 'Masquer le bouton Créer',
     'state.lockedinOff': 'LockedIn est désactivé',
     'state.breakTimerPrefix': 'À bientôt dans',
     'sponsor.title': 'Soutenir LockedIn',
@@ -685,6 +708,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'YouTube-Seitenleiste',
     'setting.hideExplore': 'Explore & Trends ausblenden',
     'setting.hideMoreFromYT': 'Mehr von YouTube ausblenden',
+    'group.navbar': 'YouTube-Navigationsleiste',
+    'setting.cleanNavBar': 'Navigationsleiste bereinigen',
+    'setting.hideNotificationBell': 'Benachrichtigungsglocke ausblenden',
+    'setting.hideCreateButton': '„Erstellen“-Schaltfläche ausblenden',
     'state.lockedinOff': 'LockedIn ist deaktiviert',
     'state.breakTimerPrefix': 'Bis gleich in',
     'sponsor.title': 'LockedIn unterstützen',
@@ -787,6 +814,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'YouTube 侧边栏',
     'setting.hideExplore': '隐藏探索与趋势',
     'setting.hideMoreFromYT': '隐藏更多 YouTube 内容',
+    'group.navbar': 'YouTube 导航栏',
+    'setting.cleanNavBar': '清理导航栏',
+    'setting.hideNotificationBell': '隐藏通知铃铛',
+    'setting.hideCreateButton': '隐藏创建按钮',
     'state.lockedinOff': 'LockedIn 已关闭',
     'state.breakTimerPrefix': '将在以下时间后回来：',
     'sponsor.title': '支持 LockedIn',
@@ -890,6 +921,10 @@ const I18N_STRINGS = {
     'group.sidebar': 'YouTube 側邊欄',
     'setting.hideExplore': '隱藏探索與趨勢',
     'setting.hideMoreFromYT': '隱藏更多 YouTube 內容',
+    'group.navbar': 'YouTube 導覽列',
+    'setting.cleanNavBar': '清理導覽列',
+    'setting.hideNotificationBell': '隱藏通知鈴鐺',
+    'setting.hideCreateButton': '隱藏建立按鈕',
     'state.lockedinOff': 'LockedIn 已關閉',
     'state.breakTimerPrefix': '將在以下時間後回來：',
     'sponsor.title': '支持 LockedIn',
@@ -1915,6 +1950,9 @@ function loadSettings() {
       const cleanSidebarSubToggles = document.getElementById('cleanSidebarSubToggles');
       if (!currentSettings.cleanSidebar) cleanSidebarSubToggles?.classList.add('visible');
       else cleanSidebarSubToggles?.classList.remove('visible');
+      const cleanNavSubToggles = document.getElementById('cleanNavSubToggles');
+      if (!currentSettings.cleanNavBar) cleanNavSubToggles?.classList.add('visible');
+      else cleanNavSubToggles?.classList.remove('visible');
       const autoplaySubToggles = document.getElementById('autoplaySubToggles');
       if (!currentSettings.disableAutoplay) autoplaySubToggles?.classList.add('visible');
       else autoplaySubToggles?.classList.remove('visible');
@@ -2023,6 +2061,17 @@ function setupToggleListeners() {
         else {
           sub?.classList.remove('visible');
           ['hideExplore', 'hideMoreFromYT', 'hideSubscriptions'].forEach(s => {
+            const t = document.querySelector(`input[data-setting="${s}"]`);
+            if (t && t.checked) { t.checked = false; browser.storage.sync.set({ [s]: false }); }
+          });
+        }
+      }
+      if (settingId === 'cleanNavBar') {
+        const sub = document.getElementById('cleanNavSubToggles');
+        if (!isChecked) sub?.classList.add('visible');
+        else {
+          sub?.classList.remove('visible');
+          ['hideNotificationBell', 'hideCreateButton'].forEach(s => {
             const t = document.querySelector(`input[data-setting="${s}"]`);
             if (t && t.checked) { t.checked = false; browser.storage.sync.set({ [s]: false }); }
           });
@@ -2158,6 +2207,31 @@ function setupToggleListeners() {
             // Notify content script
             browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
               if (tabs[0]) browser.tabs.sendMessage(tabs[0].id, { action: 'settingChanged', setting: 'hideSidebar', value: true }).catch(() => {});
+            });
+          });
+          return; // Skip the normal storage save below
+        }
+      }
+
+      // Auto-enable Clean Navigation Bar when both sub-toggles are enabled
+      if (['hideNotificationBell', 'hideCreateButton'].includes(settingId)) {
+        const notifToggle = document.querySelector('input[data-setting="hideNotificationBell"]');
+        const createToggle = document.querySelector('input[data-setting="hideCreateButton"]');
+        const cleanNavToggle = document.querySelector('input[data-setting="cleanNavBar"]');
+
+        if (notifToggle?.checked && createToggle?.checked) {
+          cleanNavToggle.checked = true;
+          browser.storage.sync.set({
+            cleanNavBar: true,
+            hideNotificationBell: false,
+            hideCreateButton: false
+          }, () => {
+            notifToggle.checked = false;
+            createToggle.checked = false;
+            const sub = document.getElementById('cleanNavSubToggles');
+            sub?.classList.remove('visible');
+            browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+              if (tabs[0]) browser.tabs.sendMessage(tabs[0].id, { action: 'settingChanged', setting: 'cleanNavBar', value: true }).catch(() => {});
             });
           });
           return; // Skip the normal storage save below

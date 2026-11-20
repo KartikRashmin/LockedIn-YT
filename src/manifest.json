@@ -37,6 +37,7 @@
         "content/shorts.js",
         "content/subscriptions.js",
         "content/sidebar.js",
+        "content/navbar.js",
         "content/autoplay.js",
         "content/index.js"
       ],
