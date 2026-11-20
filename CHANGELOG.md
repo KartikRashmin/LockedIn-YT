@@ -1,3 +1,12 @@
+## [1.2.5] - 2026-11-20
+### Added
+- Added a new YouTube Navigation Bar group with a parent Clean Navigation Bar toggle and sub-toggles to hide the Notification Bell and the Create button from YouTube's top masthead (#41, #42).
+- Added instant zero-flicker CSS hiding and responsive mutation observer support across desktop and mobile YouTube surfaces.
+- Added multi-language translations for the new Navigation Bar settings across all 8 supported languages.
+
+### Credits
+- Thanks to [@wiredmatt](https://github.com/wiredmatt) for suggesting the option to hide the Notification Bell in [#41](https://github.com/KartikRashmin/LockedIn-YT/issues/41).
+
 ## [1.2.4] - 2026-11-09
 ### Added
 - Added an optional Google-style search widget on the homepage when the feed is hidden, replacing the previous motivational quotes.
