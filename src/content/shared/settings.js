@@ -112,6 +112,7 @@ const DEFAULT_SETTINGS = {
 	cleanNavBar: false,
 	hideNotificationBell: false,
 	hideCreateButton: false,
+	hideTabNotificationCount: false,
 	hideShortsGlobally: false,
 	redirectShorts: false,
 	hideVideoThumbnails: false,

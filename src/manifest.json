@@ -38,6 +38,7 @@
         "content/subscriptions.js",
         "content/sidebar.js",
         "content/navbar.js",
+        "content/tab-title.js",
         "content/autoplay.js",
         "content/index.js"
       ],
@@ -50,7 +51,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["content/playlist-blocker-inject.js"],
+      "resources": ["content/playlist-blocker-inject.js", "content/tab-title-inject.js"],
       "matches": [
         "*://www.youtube.com/*",
         "*://m.youtube.com/*",
