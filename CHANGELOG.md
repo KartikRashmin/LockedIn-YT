@@ -1,3 +1,13 @@
+## [1.2.6] - 2026-11-24
+### Added
+- Added a new Miscellaneous group with a "Hide Tab Notification Count" toggle to strip unread notification badges from browser tab titles (e.g. `(3) YouTube` → `YouTube`) across all pages (#45, #46).
+- Added synchronous main-world title interception (`tab-title-inject.js`) to eliminate title flicker during SPA video navigation and page loads.
+- Added instant real-time restoration of the notification count when disabling the toggle, with fallback to the YouTube masthead badge.
+- Added localization for the new settings across all 8 supported languages.
+
+### Credits
+- Thanks to [@wiredmatt](https://github.com/wiredmatt) for proposing the feature in [#45](https://github.com/KartikRashmin/LockedIn-YT/issues/45) and contributing the initial implementation in [#46](https://github.com/KartikRashmin/LockedIn-YT/pull/46).
+
 ## [1.2.5] - 2026-11-20
 ### Added
 - Added a new YouTube Navigation Bar group with a parent Clean Navigation Bar toggle and sub-toggles to hide the Notification Bell and the Create button from YouTube's top masthead (#41, #42).
