@@ -4,7 +4,7 @@ const fs = require('node:fs');
 
 test('all data-i18n-key attributes in popup.html are translated across all 8 languages', () => {
 	const html = fs.readFileSync('src/popup/popup.html', 'utf8');
-	const js = fs.readFileSync('src/popup/popup.js', 'utf8');
+	const js = fs.readFileSync('src/popup/popup.js', 'utf8').replace(/\r\n/g, '\n');
 
 	const keysInHtml = [...new Set([...html.matchAll(/data-i18n-key="([^"]+)"/g)].map(m => m[1]))];
 	assert.ok(keysInHtml.length > 0, 'Must find i18n keys in popup.html');

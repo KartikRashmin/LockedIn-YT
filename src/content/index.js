@@ -526,6 +526,7 @@ function runAll() {
     // Merge with defaults to ensure all settings exist
     const currentSettings = { ...DEFAULT_SETTINGS, ...settings };
     latestSyncedSettings = currentSettings;
+    applyTabTitleVisibility();
     observeGuideContainers();
     observeNavBarContainers();
     updateGuideVisibility();
@@ -637,6 +638,7 @@ function runAll() {
     // Fallback: use default settings if storage fails
     const currentSettings = DEFAULT_SETTINGS;
     latestSyncedSettings = currentSettings;
+    applyTabTitleVisibility();
     setInstantHiding(currentSettings.hideShortsHomepage, currentSettings.hideShortsSearch, currentSettings.hideShortsGlobally);
     observeGuideContainers();
     observeNavBarContainers();
@@ -737,6 +739,7 @@ function restoreAllElements() {
   hideSubscriptions(false);
   updateGuideVisibility();
   updateNavBarVisibility();
+  applyTabTitleVisibility();
 }
 
 // ensureEssentialElementsVisible moved to content/search.js
@@ -747,6 +750,7 @@ if (isExtensionContextValid()) {
   storageGet('sync', null).then((settings) => {
     const currentSettings = { ...DEFAULT_SETTINGS, ...settings };
     latestSyncedSettings = currentSettings;
+    applyTabTitleVisibility();
     if (currentSettings.extensionEnabled) {
       setInstantHiding(currentSettings.hideShortsHomepage, currentSettings.hideShortsSearch, currentSettings.hideShortsGlobally);
       setInstantRecsHiding(currentSettings.hideRecommended, currentSettings.hideSidebar, currentSettings.hideEndCards);
@@ -756,6 +760,7 @@ if (isExtensionContextValid()) {
   }).catch(() => {
     // Use defaults if storage fails or context is invalidated
     latestSyncedSettings = { ...DEFAULT_SETTINGS };
+    applyTabTitleVisibility();
     setInstantHiding(DEFAULT_SETTINGS.hideShortsHomepage, DEFAULT_SETTINGS.hideShortsSearch, DEFAULT_SETTINGS.hideShortsGlobally);
     setInstantRecsHiding(DEFAULT_SETTINGS.hideRecommended, DEFAULT_SETTINGS.hideSidebar, DEFAULT_SETTINGS.hideEndCards);
     updateGuideVisibility();
