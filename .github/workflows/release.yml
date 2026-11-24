@@ -20,6 +20,16 @@ jobs:
   release:
     name: Build and Release
     runs-on: ubuntu-latest
+    env:
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -149,17 +159,17 @@ jobs:
       - name: Deploy to Firefox Add-ons (AMO)
         if: steps.check_version.outputs.should_release == 'true' && env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
         continue-on-error: true
-        env:
-          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
-          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
           echo "Deploying LockedIn v${{ steps.check_version.outputs.version }} to Firefox Add-ons (AMO)..."
+          mkdir -p temp-firefox-deploy
+          unzip -q "dist/lockedin-v${{ steps.check_version.outputs.version }}-firefox.zip" -d temp-firefox-deploy
           npx --yes web-ext sign \
             --channel=listed \
             --api-key="${AMO_JWT_ISSUER}" \
             --api-secret="${AMO_JWT_SECRET}" \
-            --source-dir=src \
+            --source-dir=temp-firefox-deploy \
             --upload-source-code="dist/lockedin-v${{ steps.check_version.outputs.version }}-source.zip"
+          rm -rf temp-firefox-deploy
 
       - name: Deploy to Chrome Web Store
         if: steps.check_version.outputs.should_release == 'true' && env.CHROME_CLIENT_ID != '' && env.CHROME_CLIENT_SECRET != '' && env.CHROME_REFRESH_TOKEN != '' && env.CHROME_EXTENSION_ID != ''
@@ -171,8 +181,9 @@ jobs:
           EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
         run: |
           echo "Deploying LockedIn v${{ steps.check_version.outputs.version }} to Chrome Web Store..."
-          npx --yes chrome-webstore-upload-cli upload \
+          npx --yes chrome-webstore-upload-cli@3 \
             --source="dist/lockedin-v${{ steps.check_version.outputs.version }}-chromium.zip" \
+            --extension-id="${EXTENSION_ID}" \
             --auto-publish
 
       - name: Deploy to Microsoft Edge Add-ons
