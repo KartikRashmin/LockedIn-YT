@@ -140,3 +140,49 @@ jobs:
             dist/lockedin-${{ steps.check_version.outputs.tag }}-opera.zip
             dist/lockedin-${{ steps.check_version.outputs.tag }}-source.zip
             dist/SHA256SUMS.txt
+
+      # =========================================================================
+      # AUTOMATED STORE DEPLOYMENTS
+      # Runs conditionally when each store's secret credentials are configured.
+      # =========================================================================
+
+      - name: Deploy to Firefox Add-ons (AMO)
+        if: steps.check_version.outputs.should_release == 'true' && env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          echo "Deploying LockedIn v${{ steps.check_version.outputs.version }} to Firefox Add-ons (AMO)..."
+          npx --yes web-ext sign \
+            --channel=listed \
+            --api-key="${AMO_JWT_ISSUER}" \
+            --api-secret="${AMO_JWT_SECRET}" \
+            --source-dir=src \
+            --upload-source-code="dist/lockedin-v${{ steps.check_version.outputs.version }}-source.zip"
+
+      - name: Deploy to Chrome Web Store
+        if: steps.check_version.outputs.should_release == 'true' && env.CHROME_CLIENT_ID != '' && env.CHROME_CLIENT_SECRET != '' && env.CHROME_REFRESH_TOKEN != '' && env.CHROME_EXTENSION_ID != ''
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          echo "Deploying LockedIn v${{ steps.check_version.outputs.version }} to Chrome Web Store..."
+          npx --yes chrome-webstore-upload-cli upload \
+            --source="dist/lockedin-v${{ steps.check_version.outputs.version }}-chromium.zip" \
+            --auto-publish
+
+      - name: Deploy to Microsoft Edge Add-ons
+        if: steps.check_version.outputs.should_release == 'true' && env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != ''
+        uses: wdzeng/edge-addon@v2
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        with:
+          product-id: ${{ secrets.EDGE_PRODUCT_ID }}
+          client-id: ${{ secrets.EDGE_CLIENT_ID }}
+          api-key: ${{ secrets.EDGE_API_KEY }}
+          zip-path: "dist/lockedin-v${{ steps.check_version.outputs.version }}-chromium.zip"
+

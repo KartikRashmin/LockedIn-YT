@@ -79,3 +79,23 @@ instead. These placeholders are replaced automatically by the local script:
 For a release request, read this file first. Inspect `src/manifest.json` and `CHANGELOG.md`, confirm the version and changelog entry match, run the relevant tests, commit and push the prepared changes if requested, then run `./scripts/release.sh`. Do not create a release if the working tree is dirty, the changelog entry is missing, the build fails, or the tag already exists. Never use `--skip-build` unless the user explicitly confirms that the existing `dist/` ZIP files are the intended release artifacts.
 
 The script publishes to the GitHub repository configured as the current git remote using the authenticated `gh` account. It does not commit source changes automatically.
+
+## Automated Store Deployments (GitHub Actions)
+
+When a new version is released on `main`, `.github/workflows/release.yml` can automatically deploy the packages to the stores if the following secrets are configured in repository settings (**Settings > Secrets and variables > Actions**):
+
+### 1. Firefox Add-ons (AMO)
+- `AMO_JWT_ISSUER`: JWT Issuer / API Key from [AMO API Keys](https://addons.mozilla.org/developers/addon/api/key/)
+- `AMO_JWT_SECRET`: JWT Secret from AMO API Keys
+
+### 2. Chrome Web Store
+- `CHROME_EXTENSION_ID`: LockedIn extension ID on Chrome Web Store
+- `CHROME_CLIENT_ID`: Google OAuth2 Client ID (from Google Cloud Console)
+- `CHROME_CLIENT_SECRET`: Google OAuth2 Client Secret
+- `CHROME_REFRESH_TOKEN`: Google OAuth2 Refresh Token
+
+### 3. Microsoft Edge Add-ons
+- `EDGE_PRODUCT_ID`: Product ID in Microsoft Partner Center
+- `EDGE_CLIENT_ID`: Client ID in Microsoft Partner Center
+- `EDGE_API_KEY`: API Key / Client Secret in Microsoft Partner Center
+
