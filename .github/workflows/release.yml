@@ -148,6 +148,7 @@ jobs:
 
       - name: Deploy to Firefox Add-ons (AMO)
         if: steps.check_version.outputs.should_release == 'true' && env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        continue-on-error: true
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
@@ -162,6 +163,7 @@ jobs:
 
       - name: Deploy to Chrome Web Store
         if: steps.check_version.outputs.should_release == 'true' && env.CHROME_CLIENT_ID != '' && env.CHROME_CLIENT_SECRET != '' && env.CHROME_REFRESH_TOKEN != '' && env.CHROME_EXTENSION_ID != ''
+        continue-on-error: true
         env:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
@@ -175,6 +177,7 @@ jobs:
 
       - name: Deploy to Microsoft Edge Add-ons
         if: steps.check_version.outputs.should_release == 'true' && env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != ''
+        continue-on-error: true
         uses: wdzeng/edge-addon@v2
         env:
           EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
