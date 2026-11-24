@@ -17,9 +17,9 @@ echo "========================================="
 echo "Building LockedIn Extension v$VERSION"
 echo "========================================="
 
-# Clean old builds
+# Clean current version builds if re-building
 mkdir -p "$DIST_DIR"
-rm -f "$DIST_DIR/lockedin-"*.zip
+rm -f "$DIST_DIR/lockedin-v$VERSION-"*.zip
 
 echo "Verifying source files..."
 required_files=(
