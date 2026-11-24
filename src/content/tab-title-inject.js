@@ -24,8 +24,7 @@
 		return;
 	}
 
-	var lastOriginal = null;
-	var lastStripped = null;
+	var lastCapturedPrefix = null;
 	var lastWrittenTitle = null;
 
 	function isEnabled() {
@@ -33,11 +32,16 @@
 			document.documentElement.getAttribute(HIDE_ATTR) === 'true';
 	}
 
+	function extractPrefix(title) {
+		if (typeof title !== 'string' || !title) return null;
+		var match = title.match(PREFIX);
+		return match ? match[0] : null;
+	}
+
 	function stripTitleNotificationCount(title) {
 		if (typeof title !== 'string' || !title) return title;
 		var stripped = title.replace(PREFIX, '');
-		if (!stripped || stripped === title) return title;
-		return stripped;
+		return stripped || title;
 	}
 
 	function getTitle() {
@@ -49,25 +53,63 @@
 		descriptor.set.call(document, title);
 	}
 
+	function getCountFromDOM() {
+		try {
+			var badge = document.querySelector(
+				'ytd-notification-topbar-button-renderer .yt-spec-icon-badge-shape__badge, ' +
+				'ytd-notification-topbar-button-renderer #notification-count, ' +
+				'ytm-notification-topbar-button-renderer .yt-spec-icon-badge-shape__badge, ' +
+				'.yt-spec-icon-badge-shape__badge'
+			);
+			if (badge) {
+				var text = (badge.textContent || '').trim();
+				if (text) return text;
+			}
+			var btn = document.querySelector(
+				'ytd-notification-topbar-button-renderer button[aria-label], ' +
+				'ytd-notification-topbar-button-renderer yt-icon-button[aria-label]'
+			);
+			if (btn) {
+				var label = btn.getAttribute('aria-label') || '';
+				var match = label.match(/[\(\[\{（【]?\s*(\d+\+?|\p{Nd}+\+?)\s*[\)\]\}）】]?/u);
+				if (match && match[1]) return match[1];
+			}
+		} catch (e) {
+			// Ignore DOM query issues
+		}
+		return null;
+	}
+
 	function applyCurrentTitle() {
 		var currentTitle = getTitle();
-		var strippedTitle = stripTitleNotificationCount(currentTitle);
-		if (strippedTitle === currentTitle) {
-			lastOriginal = null;
-			lastStripped = null;
-			return;
+		if (!currentTitle) return;
+
+		var prefix = extractPrefix(currentTitle);
+		if (prefix) {
+			lastCapturedPrefix = prefix;
+			var strippedTitle = stripTitleNotificationCount(currentTitle);
+			setTitle(strippedTitle);
 		}
-		lastOriginal = currentTitle;
-		lastStripped = strippedTitle;
-		setTitle(strippedTitle);
 	}
 
 	function restoreTitle() {
-		if (lastOriginal !== null && lastStripped !== null && getTitle() === lastStripped) {
-			setTitle(lastOriginal);
+		var currentTitle = getTitle();
+		if (!currentTitle) return;
+
+		// If current title already has a prefix, nothing to restore
+		if (extractPrefix(currentTitle)) return;
+
+		// 1. Try to restore using last known prefix (e.g. "(3) ")
+		if (lastCapturedPrefix) {
+			setTitle(lastCapturedPrefix + currentTitle);
+			return;
 		}
-		lastOriginal = null;
-		lastStripped = null;
+
+		// 2. Fallback: try to read count from DOM badge if available
+		var count = getCountFromDOM();
+		if (count) {
+			setTitle('(' + count + ') ' + currentTitle);
+		}
 	}
 
 	Object.defineProperty(Document.prototype, 'title', {
@@ -77,26 +119,22 @@
 			return descriptor.get.call(this);
 		},
 		set: function (value) {
+			var prefix = extractPrefix(value);
+			if (prefix) {
+				lastCapturedPrefix = prefix;
+			}
+
 			if (!isEnabled()) {
-				lastOriginal = null;
-				lastStripped = null;
 				descriptor.set.call(this, value);
 				return;
 			}
 
-			var strippedTitle = stripTitleNotificationCount(value);
-			if (strippedTitle === value) {
-				// An external title update without a counter: drop any snapshot
-				// so a removed count is never restored later.
-				lastOriginal = null;
-				lastStripped = null;
+			if (prefix) {
+				var stripped = stripTitleNotificationCount(value);
+				setTitle(stripped);
+			} else {
 				descriptor.set.call(this, value);
-				return;
 			}
-
-			lastOriginal = value;
-			lastStripped = strippedTitle;
-			setTitle(strippedTitle);
 		}
 	});
 	Document.prototype.__lockedinTabTitlePatched = true;

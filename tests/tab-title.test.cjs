@@ -10,19 +10,19 @@ test('DEFAULT_SETTINGS contains the browser tab title setting', () => {
 	assert.match(popupJs, /hideTabNotificationCount:\s*false/);
 });
 
-test('popup.html includes Browser Tab group with the notification count toggle', () => {
+test('popup.html includes Miscellaneous group with the notification count toggle', () => {
 	const popupHtml = fs.readFileSync('src/popup/popup.html', 'utf8');
 
-	assert.match(popupHtml, /data-group="browserTab"/);
+	assert.match(popupHtml, /data-group="misc"/);
 	assert.match(popupHtml, /data-setting="hideTabNotificationCount"/);
 });
 
-test('popup.js has Browser Tab translations for all 8 languages', () => {
+test('popup.js has Miscellaneous translations for all 8 languages', () => {
 	const popupJs = fs.readFileSync('src/popup/popup.js', 'utf8');
 	const languages = ['en', 'es', 'hi', 'pt', 'fr', 'de', 'zh-CN', 'zh-TW'];
 
 	for (const lang of languages) {
-		assert.ok(popupJs.includes(`'group.browserTab'`), `Missing group.browserTab translation for ${lang}`);
+		assert.ok(popupJs.includes(`'group.misc'`), `Missing group.misc translation for ${lang}`);
 		assert.ok(
 			popupJs.includes(`'setting.hideTabNotificationCount'`),
 			`Missing setting.hideTabNotificationCount translation for ${lang}`
@@ -50,6 +50,8 @@ test('main-world script strips the title synchronously through the title setter'
 	assert.match(injectJs, /Object\.defineProperty\(Document\.prototype, 'title'/);
 	assert.match(injectJs, /set: function \(value\)/);
 	assert.match(injectJs, /data-lockedin-tab-title-ready/);
+	assert.match(injectJs, /lastCapturedPrefix/);
+	assert.match(injectJs, /restoreTitle/);
 });
 
 test('tab title counter pattern removes localized notification prefixes', () => {

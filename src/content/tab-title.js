@@ -13,6 +13,7 @@ const TAB_TITLE_READY_ATTR = 'data-lockedin-tab-title-ready';
 
 let tabTitleObserver = null;
 let tabTitleScriptInjected = false;
+let tabTitleLastKnownPrefix = null;
 
 function stripTabTitleNotificationCount(title) {
 	if (typeof title !== 'string' || !title) return title;
@@ -34,6 +35,34 @@ function isTabTitleStripperReady() {
 	);
 }
 
+function getNotificationCountFromDOM() {
+	try {
+		const badge = document.querySelector(
+			'ytd-notification-topbar-button-renderer .yt-spec-icon-badge-shape__badge, ' +
+			'ytd-notification-topbar-button-renderer #notification-count, ' +
+			'ytm-notification-topbar-button-renderer .yt-spec-icon-badge-shape__badge, ' +
+			'.yt-spec-icon-badge-shape__badge'
+		);
+		if (badge) {
+			const text = (badge.textContent || '').trim();
+			if (text) return text;
+		}
+
+		const btn = document.querySelector(
+			'ytd-notification-topbar-button-renderer button[aria-label], ' +
+			'ytd-notification-topbar-button-renderer yt-icon-button[aria-label]'
+		);
+		if (btn) {
+			const label = btn.getAttribute('aria-label') || '';
+			const match = label.match(/[\(\[\{（【]?\s*(\d+\+?|\p{Nd}+\+?)\s*[\)\]\}）】]?/u);
+			if (match && match[1]) return match[1];
+		}
+	} catch (e) {
+		// Ignore DOM query errors
+	}
+	return null;
+}
+
 function injectTabTitleScript() {
 	if (tabTitleScriptInjected) return;
 	tabTitleScriptInjected = true;
@@ -53,15 +82,32 @@ function applyTabTitleVisibility() {
 	const shouldHide = shouldHideTabTitleNotificationCount();
 	setRootFlag(TAB_TITLE_HIDE_ATTR, shouldHide);
 
+	const currentTitle = document.title;
+	if (currentTitle) {
+		const prefixMatch = currentTitle.match(TAB_TITLE_NOTIFICATION_PREFIX);
+		if (prefixMatch) {
+			tabTitleLastKnownPrefix = prefixMatch[0];
+		}
+	}
+
 	if (!shouldHide) {
-		// The main-world script restores the counter when the attribute is removed.
+		// When unhidden, ensure the title is restored even if main-world couldn't or wasn't loaded
+		if (document.title && !TAB_TITLE_NOTIFICATION_PREFIX.test(document.title)) {
+			if (tabTitleLastKnownPrefix) {
+				document.title = tabTitleLastKnownPrefix + document.title;
+			} else {
+				const count = getNotificationCountFromDOM();
+				if (count) {
+					document.title = `(${count}) ${document.title}`;
+				}
+			}
+		}
 		return;
 	}
 
-	// When the main-world script is active it strips titles synchronously.
+	// When hiding: if main-world script is already active, it handles it synchronously
 	if (isTabTitleStripperReady()) return;
 
-	const currentTitle = document.title;
 	if (!currentTitle) return;
 
 	const strippedTitle = stripTabTitleNotificationCount(currentTitle);
