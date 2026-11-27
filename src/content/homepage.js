@@ -45,23 +45,64 @@ function isYouTubeDarkMode() {
 let homepageInterceptorSetup = false;
 
 // --- Playables Section Observer ---
+const PLAYABLES_STYLE_ID = 'lockedin-hide-playables';
 let playablesObserver = null;
 let playablesShouldHide = false;
 
-function handlePlayablesSections() {
-	document.querySelectorAll('ytd-rich-section-renderer').forEach(section => {
-		const headerLink = section.querySelector('#rich-shelf-header a[href="/playables"], #title-container a[href="/playables"]');
-		if (headerLink) {
-			if (playablesShouldHide) {
-				section.setAttribute('hidden', '');
-				section.style.display = 'none';
-				section.setAttribute('data-lockedin-hidden', 'playables-section');
-			} else {
-				section.removeAttribute('hidden');
-				section.style.display = '';
-				section.removeAttribute('data-lockedin-hidden');
-			}
+function isPlayablesSection(element) {
+	// Playables shelves link to /playables (sometimes with a trailing slash or query string)
+	return !!element.querySelector('a[href*="/playables" i]');
+}
+
+function getPlayablesSections() {
+	const sections = new Set();
+	document.querySelectorAll('ytd-rich-section-renderer, ytd-rich-shelf-renderer, grid-shelf-view-model, ytd-horizontal-card-list-renderer').forEach(element => {
+		if (!isPlayablesSection(element)) return;
+		// Hide the outermost section so YouTube's own wrappers do not leave a gap
+		sections.add(element.closest('ytd-rich-section-renderer') || element);
+	});
+	return sections;
+}
+
+function injectPlayablesStyle() {
+	let style = document.getElementById(PLAYABLES_STYLE_ID);
+	if (style) return;
+	style = document.createElement('style');
+	style.id = PLAYABLES_STYLE_ID;
+	style.textContent = `
+		ytd-rich-section-renderer:has(a[href*="/playables" i]),
+		ytd-rich-shelf-renderer:has(a[href*="/playables" i]),
+		grid-shelf-view-model:has(a[href*="/playables" i]),
+		ytd-horizontal-card-list-renderer:has(a[href*="/playables" i]),
+		ytd-horizontal-card-list-renderer:has(mini-game-card-view-model),
+		ytd-horizontal-card-list-renderer:has(ytd-mini-game-card-view-model) {
+			display: none !important;
 		}
+	`;
+	(document.head || document.documentElement).appendChild(style);
+}
+
+function removePlayablesStyle() {
+	const style = document.getElementById(PLAYABLES_STYLE_ID);
+	if (style) style.remove();
+}
+
+function handlePlayablesSections() {
+	if (playablesShouldHide) {
+		getPlayablesSections().forEach(section => {
+			if (!section.hasAttribute('data-lockedin-hidden')) {
+				section.setAttribute('hidden', '');
+				section.style.setProperty('display', 'none', 'important');
+				section.setAttribute('data-lockedin-hidden', 'playables-section');
+			}
+		});
+		return;
+	}
+
+	document.querySelectorAll('[data-lockedin-hidden="playables-section"]').forEach(section => {
+		section.removeAttribute('hidden');
+		section.style.removeProperty('display');
+		section.removeAttribute('data-lockedin-hidden');
 	});
 }
 
@@ -1525,15 +1566,26 @@ function hideMembersOnly(shouldHide) {
 }
 
 function hidePlayables(shouldHide) {
-		const isHomepage = window.location.pathname === '/' || window.location.pathname === '/home';
-		if (!isHomepage) {
-			teardownPlayablesObserver();
-			return;
-		}
+	playablesShouldHide = !!shouldHide;
 
-		playablesShouldHide = !!shouldHide;
-		setupPlayablesObserver();
+	if (!playablesShouldHide) {
+		removePlayablesStyle();
 		handlePlayablesSections();
+		teardownPlayablesObserver();
+		return;
+	}
+
+	// Hide via CSS immediately so a lazily rendered shelf never flashes into view
+	injectPlayablesStyle();
+
+	const isHomepage = window.location.pathname === '/' || window.location.pathname === '/home';
+	if (!isHomepage) {
+		teardownPlayablesObserver();
+		return;
+	}
+
+	setupPlayablesObserver();
+	handlePlayablesSections();
 }
 
 function hideExploreMoreTopics(shouldHide) {

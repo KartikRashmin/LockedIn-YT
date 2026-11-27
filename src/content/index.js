@@ -587,6 +587,7 @@ function runAll() {
       hideCommunityPosts(currentSettings.hideCommunityPosts);
       hideFeaturedContent(currentSettings.hideFeaturedContent);
       hideMembersOnly(currentSettings.hideMembersOnly);
+      hidePlayables(currentSettings.hidePlayables);
     }
     
     // Video Page group
@@ -666,6 +667,7 @@ function runAll() {
       hideCommunityPosts(currentSettings.hideCommunityPosts);
       hideFeaturedContent(currentSettings.hideFeaturedContent);
       hideMembersOnly(currentSettings.hideMembersOnly);
+      hidePlayables(currentSettings.hidePlayables);
     }
     
     hideSidebar(currentSettings.hideSidebar);
@@ -717,6 +719,7 @@ function restoreAllElements() {
   hideCommunityPosts(false);
   hideFeaturedContent(false);
   hideMembersOnly(false);
+  hidePlayables(false);
   hideShortsGlobally(false);
   setupShortsLinkInterception(false);
   hideVideoThumbnails('off');
